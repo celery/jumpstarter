@@ -1,11 +1,10 @@
-from mock import AsyncMock, Mock, call
-
 import anyio
 import pytest
+from mock import AsyncMock, Mock, call
 
 from jumpstarter.actors import Actor
-from jumpstarter.states import ActorState
 from jumpstarter.resources import NotAResourceError, Resource
+from jumpstarter.states import ActorState
 
 
 @pytest.mark.anyio
