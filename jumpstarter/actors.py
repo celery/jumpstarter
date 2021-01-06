@@ -1,18 +1,12 @@
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
-from functools import partial, wraps
 from typing import ClassVar
 
 import anyio
 from anyio.abc import CancelScope
-from transitions.extensions.nesting import NestedState
 
-from jumpstarter.resources import NotAResourceError
-from jumpstarter.states import ActorStartingState, ActorStateMachine
-
-NestedState.separator = "↦"
-
+from jumpstarter.states import ActorStateMachine
 
 # region STATES
 

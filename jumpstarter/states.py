@@ -1,6 +1,9 @@
 from enum import Enum, auto
 
+from transitions.extensions.nesting import NestedState
 from transitions_anyio import HierarchicalAnyIOMachine
+
+NestedState.separator = "↦"
 
 
 class ActorStartingState(Enum):
