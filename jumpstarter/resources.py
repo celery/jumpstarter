@@ -25,12 +25,14 @@ class Resource:
         self._timeout = timeout
 
     def __set_name__(self, owner, name):
-        print(owner)
         if self._timeout:
 
             @wraps(self._resource_callback)
             async def resource_acquirer(event_data):
                 self_ = event_data.model
+
+                assert owner == type(self_)
+
                 resource = self._resource_callback(self_)
 
                 try:
@@ -44,6 +46,9 @@ class Resource:
             @wraps(self._resource_callback)
             async def resource_acquirer(event_data):
                 self_ = event_data.model
+
+                assert owner == type(self_)
+
                 resource = self._resource_callback(self_)
 
                 try:
@@ -58,4 +63,4 @@ class Resource:
         )[0]
         transition.before.append(resource_acquirer)
 
-        setattr(owner, name, self._resource_callback)
+        setattr(owner, f"__{name}", self._resource_callback)

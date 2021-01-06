@@ -29,7 +29,10 @@ class ActorState(Enum):
 class ActorStateMachine(HierarchicalAnyIOMachine):
     def __init__(self, actor_state=ActorState):
         super().__init__(
-            states=actor_state, initial=actor_state.initializing, auto_transitions=False, send_event=True
+            states=actor_state,
+            initial=actor_state.initializing,
+            auto_transitions=False,
+            send_event=True,
         )
 
         self.add_ordered_transitions(
@@ -70,7 +73,7 @@ class ActorStateMachine(HierarchicalAnyIOMachine):
         transition = self.get_transitions(
             "stop",
             actor_state.stopping.value.tasks_stopped,
-            actor_state.stopping.value.resources_released
+            actor_state.stopping.value.resources_released,
         )[0]
         transition.before.append(_release_resources)
 

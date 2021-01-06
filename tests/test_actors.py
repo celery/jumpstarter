@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock, call
+from mock import AsyncMock, Mock, call
 
 import anyio
 import pytest
@@ -104,55 +104,54 @@ async def test_stop(subtests):
         m.started_mock.assert_not_called()
 
 
+class FakeActor(Actor):
+    def __init__(self):
+        super(FakeActor, self).__init__()
+        self.resource_mock = AsyncMock()
+
+    @Resource
+    def resource(self):
+        return self.resource_mock
+
+
 @pytest.mark.anyio
 async def test_acquire_resource(subtests):
-    m = AsyncMock()
-
-    class FakeActor(Actor):
-        @Actor.acquire_resource
-        def resource(self):
-            return m
-
-    a = FakeActor()
-
-    assert a.state == ActorState.initializing
+    fake_actor = FakeActor()
+    resource_mock = fake_actor.resource_mock
+    assert fake_actor.state == ActorState.initializing
 
     async with anyio.create_task_group() as tg:
-        await a.start(tg)
+        await fake_actor.start(tg)
 
-    assert a.state == ActorState.started
+    assert fake_actor.state == ActorState.started
 
     with subtests.test("__aenter__ is called"):
-        m.__aenter__.assert_called_once_with(m)
-        m.__aexit__.assert_not_called()
+        resource_mock.__aenter__.assert_called_once_with(resource_mock)
+        resource_mock.__aexit__.assert_not_called()
 
-    assert a.state != ActorState.stopped
-    await a.stop()
+    assert fake_actor.state != ActorState.stopped
+    await fake_actor.stop()
 
     with subtests.test("__aexit__ is called"):
-        m.__aexit__.assert_called_once_with(m, None, None, None)
+        resource_mock.__aexit__.assert_called_once_with(resource_mock, None, None, None)
+
+
+class FakeActorWithAFaultyResource(Actor):
+    @Resource
+    def not_a_resource(self):
+        return object()
+
+
+print("hi")
 
 
 @pytest.mark.anyio
 async def test_acquire_resource_not_a_resource(subtests):
-    m = AsyncMock()
-
-    del m.__aenter__
-
-    i = 0
-
-    class FakeActor(Actor):
-        @Resource
-        def resource(self):
-            nonlocal i
-            i += 1
-            return m
-
-    a = FakeActor()
+    a = FakeActorWithAFaultyResource()
 
     with pytest.raises(
-            NotAResourceError,
-            match=r"The return value of resource is not a context manager.\n"
-                  r"Instead we got <AsyncMock id='[0-9]+'>",
+        NotAResourceError,
+        match=r"The return value of not_a_resource is not a context manager\.\n"
+        r"Instead we got <object object at 0x[0-9a-f]+>\.",
     ):
         await a.start()
