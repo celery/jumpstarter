@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import typing
-from contextlib import AsyncExitStack
-from functools import wraps
+from functools import partial, wraps
 
 import anyio
 
-__all__ = ("NotAResourceError",)
-
 from jumpstarter.states import ActorStartingState
+
+__all__ = ("NotAResourceError", "resource")
 
 
 class NotAResourceError(Exception):
@@ -64,3 +63,12 @@ class Resource:
         transition.before.append(resource_acquirer)
 
         setattr(owner, f"__{name}", self._resource_callback)
+
+
+def resource(
+    resource_callback: typing.Callable = None, *, timeout: float = None
+) -> typing.Union[partial[Resource], Resource]:
+    if resource_callback is None:
+        return partial(Resource, timeout=timeout)
+
+    return Resource(resource_callback)
