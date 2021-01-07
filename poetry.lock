@@ -105,17 +105,6 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
-name = "curio"
-version = "1.4"
-description = "Curio"
-category = "dev"
-optional = false
-python-versions = ">= 3.6"
-
-[package.extras]
-test = ["pytest", "sphinx"]
-
-[[package]]
 name = "idna"
 version = "3.1"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -351,15 +340,22 @@ test = ["pytest"]
 
 [[package]]
 name = "transitions-anyio"
-version = "0.1.0"
+version = "0.2.0"
 description = "An extension for the transitions state machine library which runs asynchronous state machines using anyio."
 category = "main"
 optional = false
-python-versions = ">=3.6.2,<4.0.0"
+python-versions = "^3.6.2"
+develop = false
 
 [package.dependencies]
-anyio = ">=2.0.2,<3.0.0"
-transitions = ">=0.8.6,<0.9.0"
+anyio = "^2.0.2"
+transitions = "^0.8.6"
+
+[package.source]
+type = "git"
+url = "git@github.com:pytransitions/transitions-anyio.git"
+reference = "master"
+resolved_reference = "b0a769525d5962b9fc6f1a8d41091cab0b8df41e"
 
 [[package]]
 name = "trio"
@@ -409,7 +405,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "240a8e56faa3434a8c5bb6eca1d2aa67413940ddfa968dc22a90fae22c482971"
+content-hash = "5d71b19ff646dcbee1a737442af223657e3ac87e5f8d13aa72c62052204c3bed"
 
 [metadata.files]
 anyio = [
@@ -479,9 +475,6 @@ click = [
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
-]
-curio = [
-    {file = "curio-1.4.tar.gz", hash = "sha256:57edce81c837f3c2cf42fbb346dee26e537d1659e6605269fb13bd179e068744"},
 ]
 idna = [
     {file = "idna-3.1-py3-none-any.whl", hash = "sha256:5205d03e7bcbb919cc9c19885f9920d622ca52448306f2377daede5cf3faac16"},
@@ -610,10 +603,7 @@ transitions = [
     {file = "transitions-0.8.6-py2.py3-none-any.whl", hash = "sha256:188f83a5b194c8b7b65e04a54bdde3e1bac8bfe223190d54b2084d166028ba1b"},
     {file = "transitions-0.8.6.tar.gz", hash = "sha256:032e10113139852ffb3ecfa4c2a5138f87441d85c3d6ad9122bb4b0978180a8d"},
 ]
-transitions-anyio = [
-    {file = "transitions-anyio-0.1.0.tar.gz", hash = "sha256:f2e569f9a0eab895ebfd65646f4078ec5e56e8a2ce18227550d8fdafeeb1f7ba"},
-    {file = "transitions_anyio-0.1.0-py3-none-any.whl", hash = "sha256:f30cd608765964230723f9a5b5826d024d860a05bea6a6b81f952a0385f52e39"},
-]
+transitions-anyio = []
 trio = [
     {file = "trio-0.17.0-py3-none-any.whl", hash = "sha256:fc70c74e8736d1105b3c05cc2e49b30c58755733740f9c51ae6d88a4d6d0a291"},
     {file = "trio-0.17.0.tar.gz", hash = "sha256:e85cf9858e445465dfbb0e3fdf36efe92082d2df87bfe9d62585eedd6e8e9d7d"},
