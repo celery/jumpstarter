@@ -164,7 +164,7 @@ colors = ["colorama (>=0.4.3,<0.5.0)"]
 name = "mock"
 version = "4.0.3"
 description = "Rolling backport of unittest.mock for all Pythons"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -409,7 +409,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "3f2c385467e7dd864b5f10047740dcdd5de453dfd6081ce2153e65ddda7ee6d6"
+content-hash = "240a8e56faa3434a8c5bb6eca1d2aa67413940ddfa968dc22a90fae22c482971"
 
 [metadata.files]
 anyio = [
