@@ -5,7 +5,7 @@ from functools import partial, wraps
 
 import anyio
 
-from jumpstarter.states import ActorStartingState
+from jumpstarter.states import ActorStartingState, ActorStoppingState
 
 __all__ = ("NotAResourceError", "resource")
 
@@ -20,10 +20,14 @@ class NotAResourceError(Exception):
 
 class Resource:
     def __init__(self, resource_callback: typing.Callable, timeout: float = None):
-        self._resource_callback = resource_callback
-        self._timeout = timeout
+        self._resource_callback: typing.Callable = resource_callback
+        self._timeout: float = timeout
+
+        self._name: typing.Optional[str] = None
 
     def __set_name__(self, owner, name):
+        self._name = name
+
         if self._timeout:
 
             @wraps(self._resource_callback)
@@ -33,6 +37,7 @@ class Resource:
                 assert owner == type(self_)
 
                 resource = self._resource_callback(self_)
+                self_._resources[name] = resource
 
                 try:
                     async with anyio.fail_after(self._timeout):
@@ -49,6 +54,7 @@ class Resource:
                 assert owner == type(self_)
 
                 resource = self._resource_callback(self_)
+                self_._resources[name] = resource
 
                 try:
                     await self_._exit_stack.enter_async_context(resource)
@@ -62,7 +68,26 @@ class Resource:
         )[0]
         transition.before.append(resource_acquirer)
 
+        def _cleanup_resource(event_data):
+            self_ = event_data.model
+            del self_._resources[name]
+
+        transition = owner._state_machine.get_transitions(
+            "stop",
+            ActorStoppingState.tasks_stopped,
+            ActorStoppingState.resources_released,
+        )[0]
+        transition.before.append(_cleanup_resource)
+
         setattr(owner, f"__{name}", self._resource_callback)
+        setattr(owner, name, self)
+
+    def __set__(self, instance, value):
+        raise AttributeError("can't set attribute")
+
+    def __get__(self, instance, owner):
+        if instance:
+            return instance._resources[self._name]
 
 
 def resource(

@@ -25,6 +25,10 @@ class Actor:
         self._exit_stack: AsyncExitStack = AsyncExitStack()
         self._cancel_scope: CancelScope = anyio.open_cancel_scope()
 
+        self._resources: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(
+            lambda: None
+        )
+
     def __init_subclass__(cls, **kwargs):
         for base in cls.__bases__:
             base_state_machine = getattr(base, "_state_machine", None)
