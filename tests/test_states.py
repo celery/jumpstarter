@@ -3,8 +3,9 @@ from mock import ANY, AsyncMock, Mock, call
 
 from jumpstarter.states import ActorStateMachine
 
+pytestmark = pytest.mark.anyio
 
-@pytest.mark.anyio
+
 async def test_start(subtests):
     m = Mock()
 
@@ -52,7 +53,6 @@ async def test_start(subtests):
         m.dependencies_stopped_mock.assert_not_called()
 
 
-@pytest.mark.anyio
 async def test_stop(subtests):
     m = Mock()
 
