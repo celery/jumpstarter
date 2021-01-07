@@ -141,9 +141,6 @@ class FakeActorWithAFaultyResource(Actor):
         return object()
 
 
-print("hi")
-
-
 @pytest.mark.anyio
 async def test_acquire_resource_not_a_resource(subtests):
     a = FakeActorWithAFaultyResource()
