@@ -1,37 +1,25 @@
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
-from typing import ClassVar
 
 import anyio
 from anyio.abc import CancelScope
 
 from jumpstarter.states import ActorStateMachine
 
-# region STATES
-
-
-# class ActorRestartState(Enum):
-#     starting = auto()
-#     stopping = auto()
-#     stopped = auto()
-
-
-# endregion
-
 
 class Actor:
-    __state_machine: ClassVar[
+    __state_machine: typing.ClassVar[
         typing.Dict[typing.Type, ActorStateMachine]
     ] = defaultdict(ActorStateMachine)
 
     @classmethod
     @property
     def _state_machine(cls) -> ActorStateMachine:
-        return cls._Actor__state_machine[cls]
+        return cls.__state_machine[cls]
 
     def __init__(self):
-        cls: Type = type(self)
+        cls: typing.Type = type(self)
         cls._state_machine.add_model(self)
 
         self._exit_stack: AsyncExitStack = AsyncExitStack()
