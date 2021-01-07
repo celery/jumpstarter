@@ -6,8 +6,9 @@ from jumpstarter.actors import Actor
 from jumpstarter.resources import NotAResourceError, resource
 from jumpstarter.states import ActorState
 
+pytestmark = pytest.mark.anyio
 
-@pytest.mark.anyio
+
 async def test_acquire_resource(subtests):
     resource_mock = AsyncMock()
 
@@ -36,7 +37,6 @@ async def test_acquire_resource(subtests):
         resource_mock.__aexit__.assert_called_once_with(resource_mock, None, None, None)
 
 
-@pytest.mark.anyio
 async def test_acquire_resource_within_specified_timeout(subtests):
     resource_mock = AsyncMock()
 
@@ -65,7 +65,6 @@ async def test_acquire_resource_within_specified_timeout(subtests):
         resource_mock.__aexit__.assert_called_once_with(resource_mock, None, None, None)
 
 
-@pytest.mark.anyio
 async def test_acquire_resource_timed_out(subtests):
     async def cause_timeout(*_, **__):
         await anyio.sleep(5)
@@ -85,7 +84,6 @@ async def test_acquire_resource_timed_out(subtests):
             await fake_actor.start(tg)
 
 
-@pytest.mark.anyio
 async def test_acquire_resource_not_a_resource(subtests):
     class FakeActorWithAFaultyResource(Actor):
         @resource
