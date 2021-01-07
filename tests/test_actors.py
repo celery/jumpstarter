@@ -98,3 +98,36 @@ async def test_acquire_resource_not_a_resource(subtests):
         r"Instead we got <object object at 0x[0-9a-f]+>\.",
     ):
         await a.start()
+
+
+async def test_resource_is_immutable():
+    class FakeActor(Actor):
+        @resource
+        def resource(self):
+            return AsyncMock()
+
+    fake_actor = FakeActor()
+
+    with pytest.raises(AttributeError, match=r"can't set attribute"):
+        fake_actor.resource = object()
+
+
+async def test_resource_accessor(subtests):
+    resource_mock = AsyncMock()
+
+    class FakeActor(Actor):
+        @resource
+        def resource(self):
+            return resource_mock
+
+    fake_actor = FakeActor()
+
+    await fake_actor.start()
+
+    with subtests.test("resource is accessible once acquired"):
+        assert fake_actor.resource is resource_mock
+
+    await fake_actor.stop()
+
+    with subtests.test("resource is None after release"):
+        assert fake_actor.resource is None
