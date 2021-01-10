@@ -34,8 +34,6 @@ class Resource:
             async def resource_acquirer(event_data):
                 self_ = event_data.model
 
-                assert owner == type(self_)
-
                 resource = self._resource_callback(self_)
                 self_._resources[name] = resource
 
@@ -50,8 +48,6 @@ class Resource:
             @wraps(self._resource_callback)
             async def resource_acquirer(event_data):
                 self_ = event_data.model
-
-                assert owner == type(self_)
 
                 resource = self._resource_callback(self_)
                 self_._resources[name] = resource
