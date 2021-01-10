@@ -74,6 +74,8 @@ class ActorStateMachine(HierarchicalAnyIOMachine):
             "stop", actor_state.stopping.value.dependencies_stopped, actor_state.stopped
         )
 
+        self.add_transition("report_error", "*", actor_state.crashed)
+
         transition = self.get_transitions(
             "stop",
             actor_state.stopping.value.tasks_stopped,
