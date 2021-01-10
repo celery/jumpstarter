@@ -63,3 +63,8 @@ class Actor:
                             )
                         )
                     )
+
+    async def manage_resource_lifecycle(
+        self, resource: typing.AsyncContextManager
+    ) -> None:
+        await self._exit_stack.enter_async_context(resource)
