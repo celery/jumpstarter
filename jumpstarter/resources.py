@@ -8,15 +8,19 @@ import transitions
 
 from jumpstarter.states import ActorStartingState, ActorStoppingState
 
-__all__ = ("NotAResourceError", "resource")
+__all__ = ("NotAResourceError", "ResourceAlreadyExistsError", "resource")
 
 
 class NotAResourceError(Exception):
-    def __init__(self, resource_callback: typing.Callable, return_value):
+    def __init__(self, resource_name: str, return_value):
         super(NotAResourceError, self).__init__(
-            f"The return value of {resource_callback.__name__} is not a context manager.\n"
+            f"The return value of {resource_name} is not a context manager.\n"
             f"Instead we got {return_value}."
         )
+
+
+class ResourceAlreadyExistsError(Exception):
+    pass
 
 
 class Resource:
@@ -36,13 +40,9 @@ class Resource:
                 self_ = event_data.model
 
                 resource = self._resource_callback(self_)
-                self_._resources[name] = resource
 
-                try:
-                    async with anyio.fail_after(self._timeout):
-                        await self_.manage_resource_lifecycle(resource)
-                except AttributeError as e:
-                    raise NotAResourceError(self._resource_callback, resource) from e
+                async with anyio.fail_after(self._timeout):
+                    await self_.manage_resource_lifecycle(resource, name)
 
         else:
 
@@ -51,12 +51,8 @@ class Resource:
                 self_ = event_data.model
 
                 resource = self._resource_callback(self_)
-                self_._resources[name] = resource
 
-                try:
-                    await self_.manage_resource_lifecycle(resource)
-                except AttributeError as e:
-                    raise NotAResourceError(self._resource_callback, resource) from e
+                await self_.manage_resource_lifecycle(resource, name)
 
         # TODO: Figure out how to encapsulate the registration the callbacks
 
@@ -66,17 +62,6 @@ class Resource:
             ActorStartingState.resources_acquired,
         )[0]
         transition.before.append(resource_acquirer)
-
-        def _cleanup_resource(event_data: transitions.EventData) -> None:
-            self_ = event_data.model
-            del self_._resources[name]
-
-        transition = owner._state_machine.get_transitions(
-            "stop",
-            ActorStoppingState.tasks_stopped,
-            ActorStoppingState.resources_released,
-        )[0]
-        transition.before.append(_cleanup_resource)
 
         setattr(owner, f"__{name}", self._resource_callback)
         setattr(owner, name, self)
