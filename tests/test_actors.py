@@ -100,6 +100,22 @@ async def test_acquire_resource_not_a_resource(subtests):
         await a.start()
 
 
+async def test_acquire_resource_within_specified_timeout_not_a_resource(subtests):
+    class FakeActorWithAFaultyResource(Actor):
+        @resource(timeout=1)
+        def not_a_resource(self):
+            return object()
+
+    a = FakeActorWithAFaultyResource()
+
+    with pytest.raises(
+        NotAResourceError,
+        match=r"The return value of not_a_resource is not a context manager\.\n"
+        r"Instead we got <object object at 0x[0-9a-f]+>\.",
+    ):
+        await a.start()
+
+
 async def test_resource_is_immutable():
     class FakeActor(Actor):
         @resource
