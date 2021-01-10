@@ -3,16 +3,18 @@ import sys
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
+from functools import partial
 from uuid import UUID, uuid4
 
 import anyio
-from anyio.abc import CancelScope, CapacityLimiter
+from anyio.abc import CancelScope, CapacityLimiter, TaskGroup
 
 from jumpstarter.resources import (
     NotAResourceError,
     ResourceAlreadyExistsError,
     ThreadedContextManager,
-    is_synchronous_resource, resource,
+    is_synchronous_resource,
+    resource,
 )
 from jumpstarter.states import ActorStateMachine
 
@@ -59,6 +61,8 @@ class Actor:
         cls._state_machine.add_model(self)
 
         self._exit_stack: AsyncExitStack = AsyncExitStack()
+        self._cancel_scope: CancelScope = anyio.open_cancel_scope()
+        self._task_group: typing.Optional[TaskGroup] = None
 
         self._resources: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(
             lambda: None
@@ -126,6 +130,11 @@ class Actor:
             raise NotAResourceError(name, resource) from e
 
         self._exit_stack.push(lambda *_: self._cleanup_resource(name))
+
+    async def spawn_task(self, task, *args, **kwargs):
+        if kwargs:
+            task = partial(task, **kwargs)
+        await self._task_group.spawn(task, *args)
 
     # endregion
 

@@ -3,7 +3,7 @@ from uuid import UUID
 import pytest
 
 from jumpstarter.actors import Actor
-from jumpstarter.states import ActorState, ActorStartedState
+from jumpstarter.states import ActorStartedState, ActorState
 
 pytestmark = pytest.mark.anyio
 
@@ -22,9 +22,9 @@ async def test_actor_id_is_set():
     class FakeActor(Actor):
         ...
 
-    fake_actor = FakeActor(actor_id='fake_actor')
+    fake_actor = FakeActor(actor_id="fake_actor")
 
-    assert fake_actor.actor_id == 'fake_actor'
+    assert fake_actor.actor_id == "fake_actor"
     assert isinstance(fake_actor.actor_id, str)
 
 

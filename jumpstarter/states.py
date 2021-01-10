@@ -1,6 +1,8 @@
 from enum import Enum, auto
 
+import anyio
 import transitions
+from anyio.abc import TaskGroup
 from transitions.extensions.nesting import NestedState
 
 try:
@@ -99,6 +101,21 @@ class ActorStateMachine(BaseStateMachine):
         )[0]
         transition.before.append(_release_resources)
 
+        self.on_enter(actor_state.starting, _maybe_acquire_task_group)
+
 
 async def _release_resources(event_data: transitions.EventData) -> None:
     await event_data.model._exit_stack.aclose()
+
+
+async def _maybe_acquire_task_group(event_data) -> None:
+    self_ = event_data.model
+
+    try:
+        task_group: TaskGroup = event_data.kwargs["task_group"]
+    except KeyError:
+        # TODO: Log in case we're creating our own task group
+        task_group: TaskGroup = anyio.create_task_group()
+        await self_._exit_stack.enter_async_context(task_group)
+
+    self_._task_group = task_group

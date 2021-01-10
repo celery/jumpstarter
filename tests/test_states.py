@@ -1,6 +1,6 @@
 import pytest
 
-from jumpstarter.states import ActorStateMachine, ActorStartedState
+from jumpstarter.states import ActorStartedState, ActorStateMachine
 from tests.mock import ANY, AsyncMock, Mock, call
 
 pytestmark = pytest.mark.anyio
@@ -42,7 +42,7 @@ async def test_start(subtests):
                 call.resources_acquired_mock(ANY),
                 call.tasks_started_mock(ANY),
                 call.started_mock(ANY),
-                call.started_running_mock(ANY)
+                call.started_running_mock(ANY),
             ]
         )
 
