@@ -58,6 +58,8 @@ class Resource:
                 except AttributeError as e:
                     raise NotAResourceError(self._resource_callback, resource) from e
 
+        # TODO: Figure out how to encapsulate the registration the callbacks
+
         transition = owner._state_machine.get_transitions(
             "start",
             ActorStartingState.dependencies_started,
