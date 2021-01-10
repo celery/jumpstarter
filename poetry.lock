@@ -344,18 +344,11 @@ version = "0.2.0"
 description = "An extension for the transitions state machine library which runs asynchronous state machines using anyio."
 category = "main"
 optional = false
-python-versions = "^3.6.2"
-develop = false
+python-versions = ">=3.6.2,<4.0.0"
 
 [package.dependencies]
-anyio = "^2.0.2"
-transitions = "^0.8.6"
-
-[package.source]
-type = "git"
-url = "git@github.com:pytransitions/transitions-anyio.git"
-reference = "master"
-resolved_reference = "b0a769525d5962b9fc6f1a8d41091cab0b8df41e"
+anyio = ">=2.0.2,<3.0.0"
+transitions = ">=0.8.6,<0.9.0"
 
 [[package]]
 name = "trio"
@@ -405,7 +398,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "5d71b19ff646dcbee1a737442af223657e3ac87e5f8d13aa72c62052204c3bed"
+content-hash = "41ad096668db3cb0a6b10024bc2f006972ac327e98c618701704bd17b0e6b6af"
 
 [metadata.files]
 anyio = [
@@ -603,7 +596,10 @@ transitions = [
     {file = "transitions-0.8.6-py2.py3-none-any.whl", hash = "sha256:188f83a5b194c8b7b65e04a54bdde3e1bac8bfe223190d54b2084d166028ba1b"},
     {file = "transitions-0.8.6.tar.gz", hash = "sha256:032e10113139852ffb3ecfa4c2a5138f87441d85c3d6ad9122bb4b0978180a8d"},
 ]
-transitions-anyio = []
+transitions-anyio = [
+    {file = "transitions-anyio-0.2.0.tar.gz", hash = "sha256:376cf4f1640bf08376db542a9c4aaf5760adf177d5008db0fd6078b370fe11f4"},
+    {file = "transitions_anyio-0.2.0-py3-none-any.whl", hash = "sha256:98fc7065a3ca2e31c7a301128f0e0d81dab08029f4380da6b8eb6c14920b4ea0"},
+]
 trio = [
     {file = "trio-0.17.0-py3-none-any.whl", hash = "sha256:fc70c74e8736d1105b3c05cc2e49b30c58755733740f9c51ae6d88a4d6d0a291"},
     {file = "trio-0.17.0.tar.gz", hash = "sha256:e85cf9858e445465dfbb0e3fdf36efe92082d2df87bfe9d62585eedd6e8e9d7d"},
