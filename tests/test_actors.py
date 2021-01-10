@@ -3,7 +3,7 @@ import pytest
 from mock import AsyncMock
 
 from jumpstarter.actors import Actor
-from jumpstarter.resources import NotAResourceError, resource
+from jumpstarter.resources import NotAResourceError, ResourceUnavailable, resource
 from jumpstarter.states import ActorState
 
 pytestmark = pytest.mark.anyio
@@ -148,3 +148,16 @@ async def test_resource_accessor(subtests):
 
     with subtests.test("resource is None after release"):
         assert fake_actor.resource is None
+
+
+async def test_resource_unavailable():
+    class FakeActor(Actor):
+        @resource
+        def resource(self):
+            raise ResourceUnavailable()
+
+    fake_actor = FakeActor()
+
+    await fake_actor.start()
+
+    assert fake_actor.resource is None

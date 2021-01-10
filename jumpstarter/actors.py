@@ -1,7 +1,6 @@
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
-from functools import partial
 
 import anyio
 from anyio.abc import CancelScope

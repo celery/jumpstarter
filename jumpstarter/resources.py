@@ -6,9 +6,14 @@ from functools import partial, wraps
 import anyio
 import transitions
 
-from jumpstarter.states import ActorStartingState, ActorStoppingState
+from jumpstarter.states import ActorStartingState
 
-__all__ = ("NotAResourceError", "ResourceAlreadyExistsError", "resource")
+__all__ = (
+    "NotAResourceError",
+    "ResourceAlreadyExistsError",
+    "ResourceUnavailable",
+    "resource",
+)
 
 
 class NotAResourceError(Exception):
@@ -20,6 +25,10 @@ class NotAResourceError(Exception):
 
 
 class ResourceAlreadyExistsError(Exception):
+    pass
+
+
+class ResourceUnavailable(Exception):
     pass
 
 
@@ -39,7 +48,10 @@ class Resource:
             async def resource_acquirer(event_data: transitions.EventData) -> None:
                 self_ = event_data.model
 
-                resource = self._resource_callback(self_)
+                try:
+                    resource = self._resource_callback(self_)
+                except ResourceUnavailable:
+                    return
 
                 async with anyio.fail_after(self._timeout):
                     await self_.manage_resource_lifecycle(resource, name)
@@ -50,7 +62,10 @@ class Resource:
             async def resource_acquirer(event_data: transitions.EventData) -> None:
                 self_ = event_data.model
 
-                resource = self._resource_callback(self_)
+                try:
+                    resource = self._resource_callback(self_)
+                except ResourceUnavailable:
+                    return
 
                 await self_.manage_resource_lifecycle(resource, name)
 
