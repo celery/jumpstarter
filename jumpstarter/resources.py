@@ -39,7 +39,7 @@ class Resource:
 
                 try:
                     async with anyio.fail_after(self._timeout):
-                        await self_._exit_stack.enter_async_context(resource)
+                        await self_.manage_resource_lifecycle(resource)
                 except AttributeError as e:
                     raise NotAResourceError(self._resource_callback, resource) from e
 
@@ -53,7 +53,7 @@ class Resource:
                 self_._resources[name] = resource
 
                 try:
-                    await self_._exit_stack.enter_async_context(resource)
+                    await self_.manage_resource_lifecycle(resource)
                 except AttributeError as e:
                     raise NotAResourceError(self._resource_callback, resource) from e
 
