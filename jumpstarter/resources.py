@@ -4,6 +4,7 @@ import typing
 from functools import partial, wraps
 
 import anyio
+import transitions
 
 from jumpstarter.states import ActorStartingState, ActorStoppingState
 
@@ -31,7 +32,7 @@ class Resource:
         if self._timeout:
 
             @wraps(self._resource_callback)
-            async def resource_acquirer(event_data):
+            async def resource_acquirer(event_data: transitions.EventData) -> None:
                 self_ = event_data.model
 
                 resource = self._resource_callback(self_)
@@ -46,7 +47,7 @@ class Resource:
         else:
 
             @wraps(self._resource_callback)
-            async def resource_acquirer(event_data):
+            async def resource_acquirer(event_data: transitions.EventData) -> None:
                 self_ = event_data.model
 
                 resource = self._resource_callback(self_)
@@ -64,7 +65,7 @@ class Resource:
         )[0]
         transition.before.append(resource_acquirer)
 
-        def _cleanup_resource(event_data):
+        def _cleanup_resource(event_data: transitions.EventData) -> None:
             self_ = event_data.model
             del self_._resources[name]
 
