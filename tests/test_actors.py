@@ -130,6 +130,7 @@ async def test_resource_is_immutable():
 
 async def test_resource_accessor(subtests):
     resource_mock = AsyncMock()
+    resource_mock.__aenter__.return_value = resource_mock
 
     class FakeActor(Actor):
         @resource

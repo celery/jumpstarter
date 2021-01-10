@@ -1,10 +1,12 @@
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
+from functools import partial
 
 import anyio
 from anyio.abc import CancelScope
 
+from jumpstarter.resources import NotAResourceError, ResourceAlreadyExistsError
 from jumpstarter.states import ActorStateMachine
 
 
@@ -65,6 +67,19 @@ class Actor:
                     )
 
     async def manage_resource_lifecycle(
-        self, resource: typing.AsyncContextManager
+        self, resource: typing.AsyncContextManager, name: str
     ) -> None:
-        await self._exit_stack.enter_async_context(resource)
+        if self._resources.get(name, None):
+            raise ResourceAlreadyExistsError(name)
+
+        # TODO: Manage non-async context managers
+
+        try:
+            self._resources[name] = await self._exit_stack.enter_async_context(resource)
+        except AttributeError as e:
+            raise NotAResourceError(name, resource) from e
+
+        self._exit_stack.push(lambda *_: self._cleanup_resource(name))
+
+    def _cleanup_resource(self, name: str) -> None:
+        del self._resources[name]
