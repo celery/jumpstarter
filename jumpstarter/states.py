@@ -1,5 +1,6 @@
 from enum import Enum, auto
 
+import transitions
 from transitions.extensions.nesting import NestedState
 from transitions_anyio import HierarchicalAnyIOMachine
 
@@ -81,5 +82,5 @@ class ActorStateMachine(HierarchicalAnyIOMachine):
         transition.before.append(_release_resources)
 
 
-async def _release_resources(event_data):
+async def _release_resources(event_data: transitions.EventData) -> None:
     await event_data.model._exit_stack.aclose()
