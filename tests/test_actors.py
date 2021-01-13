@@ -161,3 +161,21 @@ async def test_resource_unavailable():
     await fake_actor.start()
 
     assert fake_actor.resource is None
+
+
+async def test_actor_can_transition_back_to_starting_after_stopped():
+    class FakeActor(Actor):
+        ...
+
+    fake_actor = FakeActor()
+
+    assert fake_actor.state == ActorState.initializing
+
+    await fake_actor.start()
+    assert fake_actor.state == ActorState.started
+
+    await fake_actor.stop()
+    assert fake_actor.state == ActorState.stopped
+
+    await fake_actor.start()
+    assert fake_actor.state == ActorState.starting
