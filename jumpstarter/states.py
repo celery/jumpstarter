@@ -2,7 +2,8 @@ from enum import Enum, auto
 
 import transitions
 from transitions.extensions.nesting import NestedState
-from transitions_anyio import HierarchicalAnyIOMachine, HierarchicalAnyIOGraphMachine
+from transitions_anyio import (HierarchicalAnyIOGraphMachine,
+                               HierarchicalAnyIOMachine)
 
 NestedState.separator = "↦"
 
