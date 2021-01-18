@@ -5,6 +5,8 @@ from functools import partial, wraps
 
 import anyio
 import transitions
+from anyio.abc import CapacityLimiter
+from wrapt import ObjectProxy
 
 from jumpstarter.states import ActorStartingState
 
@@ -87,6 +89,24 @@ class Resource:
     def __get__(self, instance, owner):
         if instance:
             return instance._resources[self._name]
+
+
+class ThreadedContextManager(ObjectProxy):
+    def __init__(
+        self, context_manager: typing.ContextManager, capacity_limiter: CapacityLimiter
+    ):
+        super().__init__(context_manager)
+        self._capacity_limiter = capacity_limiter
+
+    async def __aenter__(self) -> typing.Any:
+        return await anyio.run_sync_in_worker_thread(
+            self.__wrapped__.__enter__, limiter=self._capacity_limiter
+        )
+
+    async def __aexit__(self, *exc_info) -> typing.Optional[bool]:
+        return await anyio.run_sync_in_worker_thread(
+            self.__wrapped__.__exit__, *exc_info, limiter=self._capacity_limiter
+        )
 
 
 def resource(
