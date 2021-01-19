@@ -6,7 +6,7 @@ import pytest
 from jumpstarter.actors import Actor
 from jumpstarter.resources import NotAResourceError, ResourceUnavailable, resource
 from jumpstarter.states import ActorState
-from tests.mock import AsyncMock
+from tests.mock import AsyncMock, MagicMock
 
 pytestmark = pytest.mark.anyio
 
@@ -21,8 +21,15 @@ async def test_actor_id_is_a_uuid():
     assert isinstance(fake_actor.actor_id, UUID)
 
 
-async def test_acquire_resource(subtests):
-    resource_mock = AsyncMock()
+@pytest.mark.parametrize(
+    ("resource_type",),
+    (
+        pytest.param(MagicMock, id="sync resource"),
+        pytest.param(AsyncMock, id="async resource"),
+    ),
+)
+async def test_acquire_resource(subtests, resource_type):
+    resource_mock = resource_type()
 
     class FakeActor(Actor):
         @resource
@@ -49,8 +56,15 @@ async def test_acquire_resource(subtests):
         resource_mock.__aexit__.assert_called_once_with(resource_mock, None, None, None)
 
 
-async def test_acquire_resource_within_specified_timeout(subtests):
-    resource_mock = AsyncMock()
+@pytest.mark.parametrize(
+    ("resource_type",),
+    (
+        pytest.param(MagicMock, id="sync resource"),
+        pytest.param(AsyncMock, id="async resource"),
+    ),
+)
+async def test_acquire_resource_within_specified_timeout(subtests, resource_type):
+    resource_mock = resource_type()
 
     class FakeActor(Actor):
         @resource(timeout=1)
@@ -77,7 +91,7 @@ async def test_acquire_resource_within_specified_timeout(subtests):
         resource_mock.__aexit__.assert_called_once_with(resource_mock, None, None, None)
 
 
-async def test_acquire_resource_timed_out(subtests):
+async def test_acquire_async_resource_timed_out(subtests):
     async def cause_timeout(*_, **__):
         await anyio.sleep(5)
 
@@ -92,6 +106,23 @@ async def test_acquire_resource_timed_out(subtests):
     fake_actor = FakeActor()
 
     with pytest.raises(TimeoutError):
+        async with anyio.create_task_group() as tg:
+            await fake_actor.start(tg)
+
+
+async def test_acquire_sync_resource_timeout_not_supported(subtests):
+    resource_mock = MagicMock()
+    del resource_mock.__aenter__
+    del resource_mock.__aexit__
+
+    class FakeActor(Actor):
+        @resource(timeout=0.01)
+        def resource(self):
+            return resource_mock
+
+    fake_actor = FakeActor()
+
+    with pytest.raises(TypeError):
         async with anyio.create_task_group() as tg:
             await fake_actor.start(tg)
 

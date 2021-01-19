@@ -16,6 +16,7 @@ __all__ = (
     "ResourceUnavailable",
     "resource",
     "ThreadedContextManager",
+    "is_synchronous_resource",
 )
 
 
@@ -33,6 +34,14 @@ class ResourceAlreadyExistsError(Exception):
 
 class ResourceUnavailable(Exception):
     pass
+
+
+def is_synchronous_resource(
+    resource: typing.Union[typing.ContextManager, typing.AsyncContextManager]
+) -> bool:
+    return isinstance(resource, typing.ContextManager) and not isinstance(
+        resource, typing.AsyncContextManager
+    )
 
 
 class Resource:
@@ -55,6 +64,12 @@ class Resource:
                     resource = self._resource_callback(self_)
                 except ResourceUnavailable:
                     return
+
+                if is_synchronous_resource(resource):
+                    raise TypeError(
+                        "Specifying a timeout is not supported while acquiring a synchronous resource.\n"
+                        f"You should either remove the timeout keyword argument from the definition of {name} or replace it with an asynchronous resource."
+                    )
 
                 async with anyio.fail_after(self._timeout):
                     await self_.manage_resource_lifecycle(resource, name)
