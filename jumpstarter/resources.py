@@ -15,7 +15,7 @@ __all__ = (
     "ResourceAlreadyExistsError",
     "ResourceUnavailable",
     "resource",
-    "ThreadedContextManager"
+    "ThreadedContextManager",
 )
 
 
