@@ -30,6 +30,17 @@ class ActorState(Enum):
     crashed = auto()
 
 
+class ActorStateTriggers(str, Enum):
+    def _generate_next_value_(name, *args):
+        return name.lower()
+
+    init = auto()
+    start = auto()
+    stop = auto()
+    restart = auto()
+    report_error = auto()
+
+
 class ActorStateMachine(HierarchicalAnyIOGraphMachine):
     def __init__(self, actor_state=ActorState):
         super().__init__(
@@ -48,13 +59,15 @@ class ActorStateMachine(HierarchicalAnyIOGraphMachine):
                 actor_state.starting.value.resources_acquired,
                 actor_state.starting.value.tasks_started,
             ],
-            trigger="start",
+            trigger=ActorStateTriggers.start,
             loop=False,
-            after="start",
+            after=ActorStateTriggers.start,
         )
 
         self.add_transition(
-            "start", actor_state.starting.value.tasks_started, actor_state.started
+            ActorStateTriggers.start,
+            actor_state.starting.value.tasks_started,
+            actor_state.started,
         )
 
         self.add_ordered_transitions(
@@ -65,20 +78,27 @@ class ActorStateMachine(HierarchicalAnyIOGraphMachine):
                 actor_state.stopping.value.resources_released,
                 actor_state.stopping.value.dependencies_stopped,
             ],
-            trigger="stop",
+            trigger=ActorStateTriggers.stop,
             loop=False,
-            after="stop",
+            after=ActorStateTriggers.stop,
         )
 
         self.add_transition(
-            "stop", actor_state.stopping.value.dependencies_stopped, actor_state.stopped
+            ActorStateTriggers.stop,
+            actor_state.stopping.value.dependencies_stopped,
+            actor_state.stopped,
         )
 
         self.add_transition("report_error", "*", actor_state.crashed)
-        self.add_transition("start", actor_state.stopped, actor_state.starting)
+        self.add_transition(
+            ActorStateTriggers.start,
+            actor_state.stopped,
+            actor_state.starting,
+            after=ActorStateTriggers.start,
+        )
 
         transition = self.get_transitions(
-            "stop",
+            ActorStateTriggers.stop,
             actor_state.stopping.value.tasks_stopped,
             actor_state.stopping.value.resources_released,
         )[0]
