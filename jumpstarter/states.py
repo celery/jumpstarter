@@ -39,7 +39,7 @@ class ActorStateTriggers(str, Enum):
     def _generate_next_value_(name, *args):
         return name.lower()
 
-    init = auto()
+    initialize = auto()
     start = auto()
     stop = auto()
     restart = auto()
