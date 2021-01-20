@@ -19,15 +19,31 @@ class ActorStoppingState(Enum):
     dependencies_stopped = auto()
 
 
+class ActorRestartingState(Enum):
+    starting = auto()
+    stopping = auto()
+
+
 class ActorState(Enum):
     initializing = auto()
     initialized = auto()
-    # restarting = ActorRestartState
     starting = ActorStartingState
     started = auto()
     stopping = ActorStoppingState
     stopped = auto()
+    restarting = ActorRestartingState
     crashed = auto()
+
+
+class ActorStateTriggers(str, Enum):
+    def _generate_next_value_(name, *args):
+        return name.lower()
+
+    init = auto()
+    start = auto()
+    stop = auto()
+    restart = auto()
+    report_error = auto()
 
 
 class ActorStateMachine(HierarchicalAnyIOGraphMachine):
@@ -39,22 +55,42 @@ class ActorStateMachine(HierarchicalAnyIOGraphMachine):
             send_event=True,
         )
 
+        # TODO: Does transitions have an API for Enum based parallel?
+        self.add_states(
+            [
+                {
+                    "name": actor_state.restarting.name,
+                    "parallel": [
+                        actor_state.starting.name,
+                        actor_state.stopping.name,
+                    ],
+                }
+            ]
+        )
+
+        self.add_transition(
+            ActorStateTriggers.init,
+            actor_state.initializing,
+            actor_state.initialized,
+        )
+
         self.add_ordered_transitions(
             states=[
-                actor_state.initializing,
                 actor_state.initialized,
                 actor_state.starting,
                 actor_state.starting.value.dependencies_started,
                 actor_state.starting.value.resources_acquired,
                 actor_state.starting.value.tasks_started,
             ],
-            trigger="start",
+            trigger=ActorStateTriggers.start,
             loop=False,
-            after="start",
+            after=ActorStateTriggers.start,
         )
 
         self.add_transition(
-            "start", actor_state.starting.value.tasks_started, actor_state.started
+            ActorStateTriggers.start,
+            actor_state.starting.value.tasks_started,
+            actor_state.started,
         )
 
         self.add_ordered_transitions(
@@ -65,20 +101,37 @@ class ActorStateMachine(HierarchicalAnyIOGraphMachine):
                 actor_state.stopping.value.resources_released,
                 actor_state.stopping.value.dependencies_stopped,
             ],
-            trigger="stop",
+            trigger=ActorStateTriggers.stop,
             loop=False,
-            after="stop",
+            after=ActorStateTriggers.stop,
         )
 
         self.add_transition(
-            "stop", actor_state.stopping.value.dependencies_stopped, actor_state.stopped
+            ActorStateTriggers.stop,
+            actor_state.stopping.value.dependencies_stopped,
+            actor_state.stopped,
         )
 
         self.add_transition("report_error", "*", actor_state.crashed)
-        self.add_transition("start", actor_state.stopped, actor_state.starting)
+        self.add_transition(
+            ActorStateTriggers.start, actor_state.stopped, actor_state.starting
+        )
+
+        self.add_transition(
+            ActorStateTriggers.restart,
+            actor_state.started,
+            actor_state.restarting,
+            after=ActorStateTriggers.stop,
+        )
+        self.add_transition(
+            ActorStateTriggers.stop,
+            actor_state.restarting.stopping,
+            actor_state.stopping,
+            after=ActorStateTriggers.stop,
+        )
 
         transition = self.get_transitions(
-            "stop",
+            ActorStateTriggers.stop,
             actor_state.stopping.value.tasks_stopped,
             actor_state.stopping.value.resources_released,
         )[0]
