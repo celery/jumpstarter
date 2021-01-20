@@ -3,7 +3,8 @@ import pytest
 from mock import AsyncMock
 
 from jumpstarter.actors import Actor
-from jumpstarter.resources import NotAResourceError, ResourceUnavailable, resource
+from jumpstarter.resources import (NotAResourceError, ResourceUnavailable,
+                                   resource)
 from jumpstarter.states import ActorState
 
 pytestmark = pytest.mark.anyio

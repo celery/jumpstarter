@@ -2,7 +2,7 @@ from enum import Enum, auto
 
 import transitions
 from transitions.extensions.nesting import NestedState
-from transitions_anyio import HierarchicalAnyIOMachine, HierarchicalAnyIOGraphMachine
+from transitions_anyio import HierarchicalAnyIOMachine
 
 NestedState.separator = "↦"
 
@@ -41,7 +41,7 @@ class ActorStateTriggers(str, Enum):
     report_error = auto()
 
 
-class ActorStateMachine(HierarchicalAnyIOGraphMachine):
+class ActorStateMachine(HierarchicalAnyIOMachine):
     def __init__(self, actor_state=ActorState):
         super().__init__(
             states=actor_state,
