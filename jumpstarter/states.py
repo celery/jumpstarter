@@ -2,7 +2,7 @@ from enum import Enum, auto
 
 import transitions
 from transitions.extensions.nesting import NestedState
-from transitions_anyio import HierarchicalAnyIOMachine, HierarchicalAnyIOGraphMachine
+from transitions_anyio import HierarchicalAnyIOMachine
 
 NestedState.separator = "↦"
 
@@ -46,7 +46,7 @@ class ActorStateTriggers(str, Enum):
     report_error = auto()
 
 
-class ActorStateMachine(HierarchicalAnyIOGraphMachine):
+class ActorStateMachine(HierarchicalAnyIOMachine):
     def __init__(self, actor_state=ActorState):
         super().__init__(
             states=actor_state,
@@ -55,15 +55,16 @@ class ActorStateMachine(HierarchicalAnyIOGraphMachine):
             send_event=True,
         )
 
-        # TODO: Does transitions have an API for Enum based parallel?
+        # TODO: Is there a way to do this with enums?
         self.add_states(
             [
                 {
                     "name": actor_state.restarting.name,
-                    "parallel": [
-                        actor_state.starting.name,
+                    "children": [
                         actor_state.stopping.name,
+                        actor_state.starting.name,
                     ],
+                    "initial": actor_state.stopping.name,
                 }
             ]
         )
@@ -114,20 +115,29 @@ class ActorStateMachine(HierarchicalAnyIOGraphMachine):
 
         self.add_transition("report_error", "*", actor_state.crashed)
         self.add_transition(
-            ActorStateTriggers.start, actor_state.stopped, actor_state.starting
+            ActorStateTriggers.start,
+            actor_state.stopped,
+            actor_state.starting,
+            after=ActorStateTriggers.start,
         )
 
         self.add_transition(
             ActorStateTriggers.restart,
             actor_state.started,
-            actor_state.restarting,
+            actor_state.restarting.name,
             after=ActorStateTriggers.stop,
         )
         self.add_transition(
             ActorStateTriggers.stop,
-            actor_state.restarting.stopping,
-            actor_state.stopping,
-            after=ActorStateTriggers.stop,
+            "restarting↦stopping",
+            "restarting↦starting",
+            after=ActorStateTriggers.start,
+        )
+        self.add_transition(
+            ActorStateTriggers.start,
+            "restarting↦starting",
+            actor_state.starting,
+            after=ActorStateTriggers.start,
         )
 
         transition = self.get_transitions(
