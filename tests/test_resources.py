@@ -1,6 +1,7 @@
+from unittest.mock import MagicMock, sentinel
+
 import anyio
 import pytest
-from mock import MagicMock, sentinel
 
 from jumpstarter.resources import ThreadedContextManager
 

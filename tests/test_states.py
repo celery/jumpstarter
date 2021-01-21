@@ -1,5 +1,6 @@
+from unittest.mock import ANY, AsyncMock, Mock, call
+
 import pytest
-from mock import ANY, AsyncMock, Mock, call
 
 from jumpstarter.states import ActorStateMachine
 
