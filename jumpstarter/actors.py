@@ -1,3 +1,4 @@
+import sys
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
@@ -14,10 +15,18 @@ class Actor:
         typing.Dict[typing.Type, ActorStateMachine]
     ] = defaultdict(ActorStateMachine)
 
-    @classmethod
-    @property
-    def _state_machine(cls) -> ActorStateMachine:
-        return cls.__state_machine[cls]
+    # TODO: Remove this once we drop support for Python < 3.9
+    if sys.version_info[1] >= 9:
+        @classmethod
+        @property
+        def _state_machine(cls) -> ActorStateMachine:
+            return cls.__state_machine[cls]
+    else:
+        from jumpstarter.backports import classproperty
+
+        @classproperty
+        def _state_machine(cls) -> ActorStateMachine:
+            return cls.__state_machine[cls]
 
     def __init__(self):
         cls: typing.Type = type(self)
