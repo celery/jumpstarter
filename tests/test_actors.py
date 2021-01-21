@@ -1,4 +1,7 @@
-from unittest.mock import AsyncMock
+try:
+    from mock import AsyncMock
+except ImportError:
+    from unittest.mock import AsyncMock
 
 import anyio
 import pytest
