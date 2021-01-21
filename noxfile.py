@@ -7,7 +7,7 @@ from nox.sessions import Session
 def test(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
-    session.install("pytest")
+    session.run("poetry", "install", external=True)
     session.run("pytest")
 
 
