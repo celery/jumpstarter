@@ -17,10 +17,12 @@ class Actor:
 
     # TODO: Remove this once we drop support for Python < 3.9
     if sys.version_info[1] >= 9:
+
         @classmethod
         @property
         def _state_machine(cls) -> ActorStateMachine:
             return cls.__state_machine[cls]
+
     else:
         from jumpstarter.backports import classproperty
 

@@ -1,12 +1,8 @@
-try:
-    from mock import MagicMock, sentinel
-except ImportError:
-    from unittest.mock import MagicMock, sentinel
-
 import anyio
 import pytest
 
 from jumpstarter.resources import ThreadedContextManager
+from tests.mock import MagicMock, sentinel
 
 pytestmark = pytest.mark.anyio
 

@@ -1,11 +1,7 @@
-try:
-    from mock import ANY, AsyncMock, Mock, call
-except ImportError:
-    from unittest.mock import ANY, AsyncMock, Mock, call
-
 import pytest
 
 from jumpstarter.states import ActorStateMachine
+from tests.mock import ANY, AsyncMock, Mock, call
 
 pytestmark = pytest.mark.anyio
 
