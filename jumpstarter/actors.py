@@ -93,3 +93,7 @@ class Actor:
 
     def _cleanup_resource(self, name: str) -> None:
         del self._resources[name]
+
+    @classmethod
+    def draw_state_machine_graph(cls, path: str) -> None:
+        cls._state_machine.get_graph().draw(path, prog="dot")

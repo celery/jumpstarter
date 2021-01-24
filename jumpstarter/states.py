@@ -2,7 +2,14 @@ from enum import Enum, auto
 
 import transitions
 from transitions.extensions.nesting import NestedState
-from transitions_anyio import HierarchicalAnyIOMachine
+
+try:
+    import pygraphviz
+except ImportError:
+    from transitions_anyio import HierarchicalAnyIOMachine as BaseStateMachine
+else:
+    from transitions_anyio import \
+        HierarchicalAnyIOGraphMachine as BaseStateMachine
 
 NestedState.separator = "↦"
 
@@ -30,7 +37,7 @@ class ActorState(Enum):
     crashed = auto()
 
 
-class ActorStateMachine(HierarchicalAnyIOMachine):
+class ActorStateMachine(BaseStateMachine):
     def __init__(self, actor_state=ActorState):
         super().__init__(
             states=actor_state,
