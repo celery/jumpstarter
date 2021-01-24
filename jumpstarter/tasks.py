@@ -1,12 +1,12 @@
 import typing
 
-__all__ = ("task",)
-
 from functools import wraps
 
 import anyio
 
 from jumpstarter.states import ActorStartingState
+
+__all__ = ("task",)
 
 
 class Task:
