@@ -131,10 +131,10 @@ class Actor:
 
         self._exit_stack.push(lambda *_: self._cleanup_resource(name))
 
-    async def spawn_task(self, task, *args, **kwargs):
+    async def spawn_task(self, task, name, *args, **kwargs):
         if kwargs:
             task = partial(task, **kwargs)
-        await self._task_group.spawn(task, *args)
+        await self._task_group.spawn(task, *args, name=name)
 
     # endregion
 

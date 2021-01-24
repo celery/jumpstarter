@@ -42,8 +42,19 @@ class ActorState(Enum):
     crashed = auto()
 
 
+class TaskState(Enum):
+    initialized = auto()
+    running = auto()
+    succeeded = auto()
+    failed = auto()
+    retrying = auto()
+    crashed = auto()
+
+
 class ActorStateMachine(BaseStateMachine):
     def __init__(self, actor_state=ActorState):
+        self.actor_state = actor_state
+
         super().__init__(
             states=actor_state,
             initial=actor_state.initializing,
@@ -101,7 +112,13 @@ class ActorStateMachine(BaseStateMachine):
         )[0]
         transition.before.append(_release_resources)
 
-        self.on_enter(actor_state.starting, _maybe_acquire_task_group)
+        transition = self.get_transitions(
+            "start",
+            actor_state.starting.value.resources_acquired,
+            actor_state.starting.value.tasks_started,
+        )[0]
+
+        transition.before.append(_maybe_acquire_task_group)
 
 
 async def _release_resources(event_data: transitions.EventData) -> None:
