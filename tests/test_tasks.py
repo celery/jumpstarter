@@ -11,18 +11,18 @@ pytestmark = pytest.mark.anyio
 
 
 async def test_start_stop_tasks(subtests):
+    called = False
+
     class FakeActor(Actor):
         @task
         async def foo(self):
+            nonlocal called
+            called = True
             raise Success()
 
     actor = FakeActor()
 
     async with anyio.create_task_group() as tg:
-        start = partial(actor.start, task_group=tg)
-        await tg.spawn(start)
+        await actor.start(task_group=tg)
 
-        while True:
-            await anyio.sleep(1)
-
-    assert actor.state == f"starting↦foo↦{TaskState.running.name}"
+    assert called

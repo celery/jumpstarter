@@ -37,7 +37,9 @@ class Task:
         self._task_callback: typing.Callable = task_callback
         self.task_state: typing.Optional[NestedAsyncState] = None
 
-        self.initialized_state: NestedAsyncState = NestedAsyncState(TaskState.running)
+        self.initialized_state: NestedAsyncState = NestedAsyncState(
+            TaskState.initialized
+        )
         self.running_state: NestedAsyncState = NestedAsyncState(TaskState.running)
         self.succeeded_state: NestedAsyncState = NestedAsyncState(TaskState.succeeded)
         self.failed_state: NestedAsyncState = NestedAsyncState(TaskState.failed)
@@ -54,8 +56,7 @@ class Task:
             async def task_runner():
                 retried = False
 
-                while not self_._cancel_scope.cancelled:
-                    await getattr(self_, f"run_{name}")()
+                while not self_._cancel_scope.cancel_called:
                     try:
                         await self._task_callback(self_)
                     except (Success, Failure):
@@ -86,26 +87,43 @@ class Task:
         )[0]
         transition.before.append(task_starter)
 
-        self._initialize_task_state(name, state_machine)
-
-        started_state: NestedAsyncState = state_machine.get_state(
-            state_machine.actor_state.started
-        )
-        started_state.add_substate(self.task_state)
+        # TODO: Restore states when I figure out how parallel states work
+        # self._initialize_task_state(name, state_machine)
+        #
+        # started_state: NestedAsyncState = state_machine.get_state(
+        #     state_machine.actor_state.started
+        # )
+        # started_state.add_substate(self.task_state)
 
         setattr(owner, f"__{name}", self._task_callback)
         setattr(owner, name, self)
 
     def _initialize_task_state(self, name, state_machine):
-        self.task_state = NestedAsyncState(name, initial=self.initialized_state)
+        self.task_state = NestedAsyncState(name)
         self.task_state.add_substates(
             (
+                self.initialized_state,
                 self.running_state,
                 self.succeeded_state,
                 self.failed_state,
                 self.retrying_state,
                 self.crashed_state,
             )
+        )
+        self.task_state.initial = _get_task_state_name(name, TaskState.initialized)
+
+        transition = state_machine.get_transitions(
+            "start",
+            state_machine.actor_state.starting.value.tasks_started,
+            state_machine.actor_state.started,
+        )[0]
+        transition.after.append(f"run_{name}")
+
+        state_machine.add_transition(
+            f"run_{name}",
+            state_machine.actor_state.started,
+            _get_task_state_name(name, TaskState.initialized),
+            after=f"run_{name}",
         )
 
         state_machine.add_transition(

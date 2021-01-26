@@ -70,6 +70,7 @@ class Actor:
         self.__actor_id = actor_id or uuid4()
 
     def __init_subclass__(cls, **kwargs):
+        # pass
         for base in cls.__bases__:
             base_state_machine = getattr(base, "_state_machine", None)
 
@@ -132,6 +133,12 @@ class Actor:
         self._exit_stack.push(lambda *_: self._cleanup_resource(name))
 
     async def spawn_task(self, task, name, *args, **kwargs):
+        # TODO: Figure out why when running with trio, *sometimes* the task group is not acquired yet
+        # Repeatedly run the tests without the following condition
+        if self._task_group is None:
+            self._task_group: TaskGroup = anyio.create_task_group()
+            await self._exit_stack.enter_async_context(self._task_group)
+
         if kwargs:
             task = partial(task, **kwargs)
         await self._task_group.spawn(task, *args, name=name)

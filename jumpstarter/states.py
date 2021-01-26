@@ -3,6 +3,7 @@ from enum import Enum, auto
 import anyio
 import transitions
 from anyio.abc import TaskGroup
+from transitions.extensions.asyncio import _LOGGER, AsyncTransition
 from transitions.extensions.nesting import NestedState
 
 try:
@@ -51,7 +52,17 @@ class TaskState(Enum):
     crashed = auto()
 
 
+class AsyncTransitionWithLogging(AsyncTransition):
+    async def execute(self, event_data):
+        _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name, self.before)
+        _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name, self.after)
+
+        return await super().execute(event_data)
+
+
 class ActorStateMachine(BaseStateMachine):
+    transition_cls = AsyncTransitionWithLogging
+
     def __init__(self, actor_state=ActorState):
         self.actor_state = actor_state
 

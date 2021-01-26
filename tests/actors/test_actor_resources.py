@@ -30,7 +30,7 @@ async def test_acquire_resource(subtests, resource_type):
     assert fake_actor.state == ActorState.initializing
 
     async with anyio.create_task_group() as tg:
-        await fake_actor.start(tg)
+        await fake_actor.start(task_group=tg)
 
     assert fake_actor.state == ActorStartedState.healthy
 
