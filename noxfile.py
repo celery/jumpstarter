@@ -1,3 +1,5 @@
+import glob
+
 import nox
 import nox_poetry.patch  # noqa: F401
 from nox.sessions import Session
@@ -28,6 +30,11 @@ def retype(session: Session) -> None:
 def format(session: Session) -> None:
     session.install(".")
     session.run("poetry", "install", external=True)
+
+    session.log("Upgrade code to Python 3.7+")
+    for file in glob.glob("./**/*.py", recursive=True):
+        session.log(f"Upgrading {file}")
+        session.run("pyupgrade", "--py37-plus", "--exit-zero-even-if-changed", "--keep-mock", file)
 
     session.log("Removing unused imports and variables")
     session.run("autoflake", "--verbose", "-r", "-i", "--remove-unused-variables", "--remove-all-unused-imports",
