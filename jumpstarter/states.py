@@ -3,6 +3,7 @@ from enum import Enum, auto
 import anyio
 import transitions
 from anyio.abc import TaskGroup
+from transitions.core import EventData
 from transitions.extensions.asyncio import _LOGGER, AsyncTransition
 from transitions.extensions.nesting import NestedState
 
@@ -53,7 +54,7 @@ class TaskState(Enum):
 
 
 class AsyncTransitionWithLogging(AsyncTransition):
-    async def execute(self, event_data):
+    async def execute(self, event_data: EventData) -> bool:
         _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name, self.before)
         _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name, self.after)
 
@@ -136,7 +137,7 @@ async def _release_resources(event_data: transitions.EventData) -> None:
     await event_data.model._exit_stack.aclose()
 
 
-async def _maybe_acquire_task_group(event_data) -> None:
+async def _maybe_acquire_task_group(event_data: EventData) -> None:
     self_ = event_data.model
 
     try:
