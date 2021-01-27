@@ -82,8 +82,6 @@ class Actor:
         if self._resources.get(name, None):
             raise ResourceAlreadyExistsError(name)
 
-        # TODO: Manage non-async context managers
-
         try:
             self._resources[name] = await self._exit_stack.enter_async_context(resource)
         except AttributeError as e:

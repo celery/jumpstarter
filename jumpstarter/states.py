@@ -2,6 +2,7 @@ from enum import Enum, auto
 
 import transitions
 from transitions.extensions.nesting import NestedState
+from transitions.core import EventData
 
 try:
     import pygraphviz

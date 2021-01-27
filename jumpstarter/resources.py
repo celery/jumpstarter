@@ -9,6 +9,7 @@ from anyio.abc import CapacityLimiter
 from wrapt import ObjectProxy
 
 from jumpstarter.states import ActorStartingState
+from typing import Optional
 
 __all__ = (
     "NotAResourceError",
@@ -20,7 +21,7 @@ __all__ = (
 
 
 class NotAResourceError(Exception):
-    def __init__(self, resource_name: str, return_value):
+    def __init__(self, resource_name: str, return_value: typing.Any) -> None:
         super(NotAResourceError, self).__init__(
             f"The return value of {resource_name} is not a context manager.\n"
             f"Instead we got {return_value}."
@@ -111,7 +112,9 @@ class ThreadedContextManager(ObjectProxy):
 
 
 def resource(
-    resource_callback: typing.Callable = None, *, timeout: float = None
+    resource_callback: typing.Optional[typing.Callable] = None,
+    *,
+    timeout: typing.Optional[float] = None,
 ) -> typing.Union[partial[Resource], Resource]:
     if resource_callback is None:
         return partial(Resource, timeout=timeout)

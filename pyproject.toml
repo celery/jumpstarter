@@ -21,6 +21,8 @@ pytest-randomly = "^3.4"
 trio = "^0.17"
 black = "^20.8b1"
 mock = { version = "^4.0.3", python = "< 3.8" }
+pytest-cov = "^2.11.1"
+pytest-monkeytype = "^1.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
