@@ -4,12 +4,11 @@ import transitions
 from transitions.extensions.nesting import NestedState
 
 try:
-    import pygraphviz
+    import pygraphviz  # noqa: F401
 except ImportError:
     from transitions_anyio import HierarchicalAnyIOMachine as BaseStateMachine
 else:
-    from transitions_anyio import \
-        HierarchicalAnyIOGraphMachine as BaseStateMachine
+    from transitions_anyio import HierarchicalAnyIOGraphMachine as BaseStateMachine
 
 NestedState.separator = "↦"
 

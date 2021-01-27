@@ -1,5 +1,5 @@
 import nox
-import nox_poetry.patch
+import nox_poetry.patch  # noqa: F401
 from nox.sessions import Session
 
 
@@ -26,6 +26,15 @@ def retype(session: Session) -> None:
 
 @nox.session
 def format(session: Session) -> None:
-    session.install("black", "isort")
-    session.run("black", "jumpstarter/", "tests/")
+    session.install(".")
+    session.run("poetry", "install", external=True)
+
+    session.log("Removing unused imports and variables")
+    session.run("autoflake", "--verbose", "-r", "-i", "--remove-unused-variables", "--remove-all-unused-imports",
+                "--exclude", "tests/mock.py", "--ignore-init-module-imports", "jumpstarter/", "tests/")
+
+    session.log("Sorting imports")
     session.run("isort", "jumpstarter/", "tests/")
+
+    session.log("Reformatting code")
+    session.run("black", "jumpstarter/", "tests/")
