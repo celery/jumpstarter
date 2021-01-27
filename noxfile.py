@@ -8,7 +8,7 @@ def test(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
     session.run("poetry", "install", external=True)
-    session.run("pytest")
+    session.run("pytest", "-nauto")
 
 
 @nox.session
