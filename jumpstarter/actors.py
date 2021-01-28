@@ -7,12 +7,14 @@ from uuid import uuid4
 
 import anyio
 from anyio.abc import CancelScope, CapacityLimiter
+from diskcache import Cache
 
 from jumpstarter.resources import (
     NotAResourceError,
     ResourceAlreadyExistsError,
     ThreadedContextManager,
     is_synchronous_resource,
+    resource,
 )
 from jumpstarter.states import ActorStateMachine
 
@@ -49,11 +51,12 @@ class Actor:
 
         return cls.__global_worker_threads_capacity_limiter
 
-    def __init__(self):
+    def __init__(self, cache_directory=None):
         cls: typing.Type = type(self)
         cls._state_machine.add_model(self)
 
         self._exit_stack: AsyncExitStack = AsyncExitStack()
+        self._cache = Cache(directory=cache_directory)
         self._cancel_scope: CancelScope = anyio.open_cancel_scope()
 
         self._resources: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(
@@ -118,6 +121,10 @@ class Actor:
             raise NotAResourceError(name, resource) from e
 
         self._exit_stack.push(lambda *_: self._cleanup_resource(name))
+
+    @resource
+    def cache(self):
+        return self._cache
 
     def _cleanup_resource(self, name: str) -> None:
         del self._resources[name]
