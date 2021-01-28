@@ -3,7 +3,7 @@ import sys
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import anyio
 from anyio.abc import CancelScope, CapacityLimiter
@@ -49,7 +49,7 @@ class Actor:
 
         return cls.__global_worker_threads_capacity_limiter
 
-    def __init__(self):
+    def __init__(self, *, actor_id: typing.Optional[typing.Union[str, UUID]] = None):
         cls: typing.Type = type(self)
         cls._state_machine.add_model(self)
 
@@ -59,7 +59,7 @@ class Actor:
         self._resources: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(
             lambda: None
         )
-        self.__actor_id = uuid4()
+        self.__actor_id = actor_id or uuid4()
 
     def __init_subclass__(cls, **kwargs):
         for base in cls.__bases__:

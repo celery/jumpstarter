@@ -8,7 +8,7 @@ from jumpstarter.states import ActorState
 pytestmark = pytest.mark.anyio
 
 
-async def test_actor_id_is_a_uuid():
+async def test_actor_id_is_a_uuid_by_default():
     class FakeActor(Actor):
         ...
 
@@ -16,6 +16,16 @@ async def test_actor_id_is_a_uuid():
 
     assert fake_actor.actor_id
     assert isinstance(fake_actor.actor_id, UUID)
+
+
+async def test_actor_id_is_set():
+    class FakeActor(Actor):
+        ...
+
+    fake_actor = FakeActor(actor_id='fake_actor')
+
+    assert fake_actor.actor_id == 'fake_actor'
+    assert isinstance(fake_actor.actor_id, str)
 
 
 async def test_actor_can_transition_back_to_starting_after_stopped():
