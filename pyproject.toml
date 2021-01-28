@@ -10,6 +10,7 @@ transitions-anyio = "^0.2.0"
 transitions = { version = "^0.8.6", extras = ['diagrams'] }
 isort = "^5.7.0"
 wrapt = "^1.12.1"
+diskcache = "^5.2.1"
 
 [tool.poetry.extras]
 diagrams = ["transitions"]
