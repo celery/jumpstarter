@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import anyio
 import pytest
 
@@ -7,6 +9,16 @@ from jumpstarter.states import ActorState
 from tests.mock import AsyncMock
 
 pytestmark = pytest.mark.anyio
+
+
+async def test_actor_id_is_a_uuid():
+    class FakeActor(Actor):
+        ...
+
+    fake_actor = FakeActor()
+
+    assert fake_actor.actor_id
+    assert isinstance(fake_actor.actor_id, UUID)
 
 
 async def test_acquire_resource(subtests):

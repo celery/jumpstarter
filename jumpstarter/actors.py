@@ -2,6 +2,7 @@ import sys
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
+from uuid import uuid4
 
 import anyio
 from anyio.abc import CancelScope
@@ -40,6 +41,7 @@ class Actor:
         self._resources: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(
             lambda: None
         )
+        self.__actor_id = uuid4()
 
     def __init_subclass__(cls, **kwargs):
         for base in cls.__bases__:
@@ -75,6 +77,10 @@ class Actor:
                             )
                         )
                     )
+
+    @property
+    def actor_id(self):
+        return self.__actor_id
 
     async def manage_resource_lifecycle(
         self, resource: typing.AsyncContextManager, name: str
