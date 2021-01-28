@@ -12,12 +12,13 @@ from jumpstarter.resources import (
     NotAResourceError,
     ResourceAlreadyExistsError,
     ThreadedContextManager,
-    is_synchronous_resource,
+    is_synchronous_resource, resource,
 )
 from jumpstarter.states import ActorStateMachine
 
 
 class Actor:
+    # region Class Attributes
     __state_machine: typing.ClassVar[
         typing.Dict[typing.Type, ActorStateMachine]
     ] = defaultdict(ActorStateMachine)
@@ -49,12 +50,15 @@ class Actor:
 
         return cls.__global_worker_threads_capacity_limiter
 
+    # endregion
+
+    # region Dunder methods
+
     def __init__(self, *, actor_id: typing.Optional[typing.Union[str, UUID]] = None):
         cls: typing.Type = type(self)
         cls._state_machine.add_model(self)
 
         self._exit_stack: AsyncExitStack = AsyncExitStack()
-        self._cancel_scope: CancelScope = anyio.open_cancel_scope()
 
         self._resources: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(
             lambda: None
@@ -96,6 +100,10 @@ class Actor:
                         )
                     )
 
+    # endregion
+
+    # region Public API
+
     @property
     def actor_id(self):
         return self.__actor_id
@@ -119,9 +127,27 @@ class Actor:
 
         self._exit_stack.push(lambda *_: self._cleanup_resource(name))
 
+    # endregion
+
+    # region Resources
+
+    @resource
+    def cancel_scope(self):
+        return anyio.open_cancel_scope()
+
+    # endregion
+
+    # region Protected API
+
     def _cleanup_resource(self, name: str) -> None:
         del self._resources[name]
+
+    # endregion
+
+    # region Class Public API
 
     @classmethod
     def draw_state_machine_graph(cls, path: str) -> None:
         cls._state_machine.get_graph().draw(path, prog="dot")
+
+    # endregion
