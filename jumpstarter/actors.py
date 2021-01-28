@@ -1,3 +1,4 @@
+import os
 import sys
 import typing
 from collections import defaultdict
@@ -5,9 +6,14 @@ from contextlib import AsyncExitStack
 from uuid import uuid4
 
 import anyio
-from anyio.abc import CancelScope
+from anyio.abc import CancelScope, CapacityLimiter
 
-from jumpstarter.resources import NotAResourceError, ResourceAlreadyExistsError
+from jumpstarter.resources import (
+    NotAResourceError,
+    ResourceAlreadyExistsError,
+    ThreadedContextManager,
+    is_synchronous_resource,
+)
 from jumpstarter.states import ActorStateMachine
 
 
@@ -15,6 +21,8 @@ class Actor:
     __state_machine: typing.ClassVar[
         typing.Dict[typing.Type, ActorStateMachine]
     ] = defaultdict(ActorStateMachine)
+
+    __global_worker_threads_capacity_limiter = None
 
     # TODO: Remove this once we drop support for Python < 3.9
     if sys.version_info[1] >= 9:
@@ -30,6 +38,16 @@ class Actor:
         @classproperty
         def _state_machine(cls) -> ActorStateMachine:
             return cls.__state_machine[cls]
+
+    @classmethod
+    @property
+    def _global_worker_threads_capacity(cls) -> CapacityLimiter:
+        if cls.__global_worker_threads_capacity_limiter is None:
+            cls.__global_worker_threads_capacity_limiter = (
+                anyio.create_capacity_limiter(os.cpu_count())
+            )
+
+        return cls.__global_worker_threads_capacity_limiter
 
     def __init__(self):
         cls: typing.Type = type(self)
@@ -87,6 +105,12 @@ class Actor:
     ) -> None:
         if self._resources.get(name, None):
             raise ResourceAlreadyExistsError(name)
+
+        if is_synchronous_resource(resource):
+            cls = type(self)
+            resource = ThreadedContextManager(
+                resource, cls._global_worker_threads_capacity
+            )
 
         try:
             self._resources[name] = await self._exit_stack.enter_async_context(resource)
