@@ -69,7 +69,7 @@ class ActorStateMachine(BaseStateMachine):
 
         super().__init__(
             states=actor_state,
-            initial=actor_state.initializing,
+            initial=[actor_state.initializing],
             auto_transitions=False,
             send_event=True,
         )

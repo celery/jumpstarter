@@ -4,7 +4,7 @@ from functools import wraps
 import anyio
 from transitions.extensions.asyncio import NestedAsyncState, NestedAsyncTransition
 
-from jumpstarter.states import ActorStartingState, TaskState
+from jumpstarter.states import ActorStartingState, TaskState, ActorState, ActorStateMachine
 
 __all__ = ("task", "Success", "Failure", "Retry")
 
@@ -29,7 +29,7 @@ class Retry(TaskResult):
 
 
 def _get_task_state_name(name: str, state: TaskState):
-    return f"started↦{name}↦{state.name}"
+    return f"{name}_task↦{state.name}"
 
 
 class Task:
@@ -79,7 +79,7 @@ class Task:
 
             await self_.spawn_task(task_runner, name)
 
-        state_machine = owner._state_machine
+        state_machine: ActorStateMachine = owner._state_machine
         transition: NestedAsyncTransition = state_machine.get_transitions(
             "start",
             ActorStartingState.resources_acquired,
@@ -87,19 +87,17 @@ class Task:
         )[0]
         transition.before.append(task_starter)
 
-        # TODO: Restore states when I figure out how parallel states work
-        # self._initialize_task_state(name, state_machine)
-        #
-        # started_state: NestedAsyncState = state_machine.get_state(
-        #     state_machine.actor_state.started
-        # )
-        # started_state.add_substate(self.task_state)
+        self._initialize_task_state(name, state_machine)
+
+        state_machine.add_state(self.task_state)
+        state_machine.initial.append(_get_task_state_name(name, TaskState.initialized))
+        # state_machine.to(_get_task_state_name(name, TaskState.initialized))
 
         setattr(owner, f"__{name}", self._task_callback)
         setattr(owner, name, self)
 
     def _initialize_task_state(self, name, state_machine):
-        self.task_state = NestedAsyncState(name)
+        self.task_state = NestedAsyncState(f"{name}_task")
         self.task_state.add_substates(
             (
                 self.initialized_state,
@@ -123,7 +121,7 @@ class Task:
             f"run_{name}",
             state_machine.actor_state.started,
             _get_task_state_name(name, TaskState.initialized),
-            after=f"run_{name}",
+            after=[f"run_{name}"],
         )
 
         state_machine.add_transition(
