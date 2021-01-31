@@ -25,12 +25,16 @@ class ActorStoppingState(Enum):
     dependencies_stopped = auto()
 
 
+class ActorStartedState(Enum):
+    healthy = auto()
+
+
 class ActorState(Enum):
     initializing = auto()
     initialized = auto()
     # restarting = ActorRestartState
     starting = ActorStartingState
-    started = auto()
+    started = ActorStartedState
     stopping = ActorStoppingState
     stopped = auto()
     crashed = auto()
@@ -44,6 +48,9 @@ class ActorStateMachine(BaseStateMachine):
             auto_transitions=False,
             send_event=True,
         )
+
+        started_state = self.get_state(ActorState.started)
+        started_state.initial = [ActorStartedState.healthy]
 
         self.add_ordered_transitions(
             states=[

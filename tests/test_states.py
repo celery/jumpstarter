@@ -1,6 +1,6 @@
 import pytest
 
-from jumpstarter.states import ActorStateMachine
+from jumpstarter.states import ActorStateMachine, ActorStartedState
 from tests.mock import ANY, AsyncMock, Mock, call
 
 pytestmark = pytest.mark.anyio
@@ -19,6 +19,7 @@ async def test_start(subtests):
     state_machine.on_enter("starting↦resources_acquired", m.resources_acquired_mock)
     state_machine.on_enter("starting↦tasks_started", m.tasks_started_mock)
     state_machine.on_enter_started(m.started_mock)
+    state_machine.on_enter("started↦healthy", m.started_running_mock)
     state_machine.on_enter_stopping(m.stopping_mock)
     state_machine.on_enter("stopping↦tasks_stopped", m.tasks_stopped_mock)
     state_machine.on_enter("stopping↦resources_released", m.resources_released_mock)
@@ -28,8 +29,8 @@ async def test_start(subtests):
 
     await state_machine.start()
 
-    with subtests.test("actor state is started"):
-        assert state_machine.is_started(), state_machine.state
+    with subtests.test("actor state is started->running"):
+        assert state_machine.state == ActorStartedState.healthy
 
     with subtests.test("states are transitioned in order"):
         m.assert_has_calls(
@@ -41,6 +42,7 @@ async def test_start(subtests):
                 call.resources_acquired_mock(ANY),
                 call.tasks_started_mock(ANY),
                 call.started_mock(ANY),
+                call.started_running_mock(ANY)
             ]
         )
 

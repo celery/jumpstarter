@@ -3,7 +3,7 @@ from uuid import UUID
 import pytest
 
 from jumpstarter.actors import Actor
-from jumpstarter.states import ActorState
+from jumpstarter.states import ActorState, ActorStartedState
 
 pytestmark = pytest.mark.anyio
 
@@ -37,10 +37,10 @@ async def test_actor_can_transition_back_to_starting_after_stopped():
     assert fake_actor.state == ActorState.initializing
 
     await fake_actor.start()
-    assert fake_actor.state == ActorState.started
+    assert fake_actor.state == ActorStartedState.healthy
 
     await fake_actor.stop()
     assert fake_actor.state == ActorState.stopped
 
     await fake_actor.start()
-    assert fake_actor.state == ActorState.started
+    assert fake_actor.state == ActorStartedState.healthy
