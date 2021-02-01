@@ -26,6 +26,7 @@ pytest-monkeytype = "^1.1.0"
 pytest-xdist = "^2.2.0"
 autoflake = "^1.4"
 pyupgrade = "^2.7.4"
+pytest-github-actions-annotate-failures = "^0.1.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
