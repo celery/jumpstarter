@@ -5,7 +5,7 @@ import pytest
 
 from jumpstarter.actors import Actor
 from jumpstarter.resources import NotAResourceError, ResourceUnavailable, resource
-from jumpstarter.states import ActorState, ActorStartedState
+from jumpstarter.states import ActorRunningState, ActorState
 
 pytestmark = pytest.mark.anyio
 
@@ -32,7 +32,7 @@ async def test_acquire_resource(subtests, resource_type):
     async with anyio.create_task_group() as tg:
         await fake_actor.start(tg)
 
-    assert fake_actor.state == ActorStartedState.healthy
+    assert fake_actor.state == ActorRunningState.healthy
 
     with subtests.test("__aenter__ is called"):
         resource_mock.__aenter__.assert_called_once_with(resource_mock)
@@ -67,7 +67,7 @@ async def test_acquire_resource_within_specified_timeout(subtests, resource_type
     async with anyio.create_task_group() as tg:
         await fake_actor.start(tg)
 
-    assert fake_actor.state == ActorStartedState.healthy
+    assert fake_actor.state == ActorRunningState.healthy
 
     with subtests.test("__aenter__ is called"):
         resource_mock.__aenter__.assert_called_once_with(resource_mock)

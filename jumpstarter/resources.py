@@ -37,7 +37,7 @@ class ResourceUnavailable(Exception):
 
 
 def is_synchronous_resource(
-    resource: typing.Union[typing.ContextManager, typing.AsyncContextManager]
+    resource: typing.ContextManager | typing.AsyncContextManager,
 ) -> bool:
     return isinstance(resource, typing.ContextManager) and not isinstance(
         resource, typing.AsyncContextManager
@@ -49,7 +49,7 @@ class Resource:
         self._resource_callback: typing.Callable = resource_callback
         self._timeout: float = timeout
 
-        self._name: typing.Optional[str] = None
+        self._name: str | None = None
 
     def __set_name__(self, owner, name):
         self._name = name
@@ -119,17 +119,17 @@ class ThreadedContextManager(ObjectProxy):
             self.__wrapped__.__enter__, limiter=self._capacity_limiter
         )
 
-    async def __aexit__(self, *exc_info) -> typing.Optional[bool]:
+    async def __aexit__(self, *exc_info) -> bool | None:
         return await anyio.run_sync_in_worker_thread(
             self.__wrapped__.__exit__, *exc_info, limiter=self._capacity_limiter
         )
 
 
 def resource(
-    resource_callback: typing.Optional[typing.Callable] = None,
+    resource_callback: typing.Callable | None = None,
     *,
-    timeout: typing.Optional[float] = None,
-) -> typing.Union[partial[Resource], Resource]:
+    timeout: float | None = None,
+) -> partial[Resource] | Resource:
     if resource_callback is None:
         return partial(Resource, timeout=timeout)
 

@@ -6,13 +6,14 @@ from contextlib import AsyncExitStack
 from uuid import UUID, uuid4
 
 import anyio
-from anyio.abc import CancelScope, CapacityLimiter
+from anyio.abc import CapacityLimiter
 
 from jumpstarter.resources import (
     NotAResourceError,
     ResourceAlreadyExistsError,
     ThreadedContextManager,
-    is_synchronous_resource, resource,
+    is_synchronous_resource,
+    resource,
 )
 from jumpstarter.states import ActorStateMachine
 

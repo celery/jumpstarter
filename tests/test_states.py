@@ -1,14 +1,18 @@
 import pytest
 
-from jumpstarter.states import ActorStateMachine, ActorStartedState
+from jumpstarter.states import ActorRunningState, ActorStateMachine
 from tests.mock import ANY, AsyncMock, Mock, call
 
 pytestmark = pytest.mark.anyio
 
 
-async def test_start(subtests):
-    m = Mock()
+@pytest.fixture
+def m():
+    return Mock()
 
+
+@pytest.fixture
+def state_machine(m):
     state_machine = ActorStateMachine()
     state_machine._exit_stack = AsyncMock()
 
@@ -19,7 +23,8 @@ async def test_start(subtests):
     state_machine.on_enter("starting↦resources_acquired", m.resources_acquired_mock)
     state_machine.on_enter("starting↦tasks_started", m.tasks_started_mock)
     state_machine.on_enter_started(m.started_mock)
-    state_machine.on_enter("started↦healthy", m.started_running_mock)
+    state_machine.on_enter("started↦running", m.started_running_mock)
+    state_machine.on_enter("started↦running↦healthy", m.started_running_healthy_mock)
     state_machine.on_enter_stopping(m.stopping_mock)
     state_machine.on_enter("stopping↦tasks_stopped", m.tasks_stopped_mock)
     state_machine.on_enter("stopping↦resources_released", m.resources_released_mock)
@@ -27,10 +32,14 @@ async def test_start(subtests):
     state_machine.on_enter_stopped(m.stopped_mock)
     state_machine.on_enter_crashed(m.crashed_mock)
 
+    return state_machine
+
+
+async def test_start(subtests, state_machine, m):
     await state_machine.start()
 
     with subtests.test("actor state is started->running"):
-        assert state_machine.state == ActorStartedState.healthy
+        assert state_machine.state == ActorRunningState.healthy
 
     with subtests.test("states are transitioned in order"):
         m.assert_has_calls(
@@ -42,7 +51,8 @@ async def test_start(subtests):
                 call.resources_acquired_mock(ANY),
                 call.tasks_started_mock(ANY),
                 call.started_mock(ANY),
-                call.started_running_mock(ANY)
+                call.started_running_mock(ANY),
+                call.started_running_healthy_mock(ANY),
             ]
         )
 
@@ -55,27 +65,37 @@ async def test_start(subtests):
         m.dependencies_stopped_mock.assert_not_called()
 
 
-async def test_stop(subtests):
-    m = Mock()
+async def test_stop(subtests, state_machine, m):
+    state_machine.set_state("started↦running↦healthy")
+    await state_machine.stop()
 
-    state_machine = ActorStateMachine()
-    state_machine._exit_stack = AsyncMock()
-    state_machine.set_state("started")
+    with subtests.test("actor state is started"):
+        assert state_machine.is_stopped(), state_machine.state
 
-    state_machine.on_exit_initializing(m.initializing_mock)
-    state_machine.on_enter_initialized(m.initialized_mock)
-    state_machine.on_enter_starting(m.starting_mock)
-    state_machine.on_enter("starting↦dependencies_started", m.dependencies_started_mock)
-    state_machine.on_enter("starting↦resources_acquired", m.resources_acquired_mock)
-    state_machine.on_enter("starting↦tasks_started", m.tasks_started_mock)
-    state_machine.on_enter_started(m.started_mock)
-    state_machine.on_enter_stopping(m.stopping_mock)
-    state_machine.on_enter("stopping↦tasks_stopped", m.tasks_stopped_mock)
-    state_machine.on_enter("stopping↦resources_released", m.resources_released_mock)
-    state_machine.on_enter("stopping↦dependencies_stopped", m.dependencies_stopped_mock)
-    state_machine.on_enter_stopped(m.stopped_mock)
-    state_machine.on_enter_crashed(m.crashed_mock)
+    with subtests.test("states are transitioned in order"):
+        m.assert_has_calls(
+            [
+                call.stopping_mock(ANY),
+                call.tasks_stopped_mock(ANY),
+                call.resources_released_mock(ANY),
+                call.dependencies_stopped_mock(ANY),
+                call.stopped_mock(ANY),
+            ]
+        )
 
+    with subtests.test("no invalid transitions occurred"):
+        m.initializing_mock.assert_not_called()
+        m.initialized_mock.assert_not_called()
+        m.starting_mock.assert_not_called()
+        m.dependencies_started_mock.assert_not_called()
+        m.resources_acquired_mock.assert_not_called()
+        m.tasks_started_mock.assert_not_called()
+        m.started_mock.assert_not_called()
+
+
+async def test_stop_paused(subtests, state_machine, m):
+    state_machine.set_state("started↦running↦healthy")
+    await state_machine.pause()
     await state_machine.stop()
 
     with subtests.test("actor state is started"):
