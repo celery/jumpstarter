@@ -1,6 +1,10 @@
 from enum import Enum, auto
 
+import anyio
 import transitions
+from anyio.abc import TaskGroup
+from transitions.core import EventData
+from transitions.extensions.asyncio import _LOGGER, AsyncTransition
 from transitions.extensions.nesting import NestedState
 
 try:
@@ -40,11 +44,32 @@ class ActorState(Enum):
     crashed = auto()
 
 
+class TaskState(Enum):
+    initialized = auto()
+    running = auto()
+    succeeded = auto()
+    failed = auto()
+    retrying = auto()
+    crashed = auto()
+
+
+class AsyncTransitionWithLogging(AsyncTransition):
+    async def execute(self, event_data: EventData) -> bool:
+        _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name, self.before)
+        _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name, self.after)
+
+        return await super().execute(event_data)
+
+
 class ActorStateMachine(BaseStateMachine):
+    transition_cls = AsyncTransitionWithLogging
+
     def __init__(self, actor_state=ActorState):
+        self.actor_state = actor_state
+
         super().__init__(
             states=actor_state,
-            initial=actor_state.initializing,
+            initial=[actor_state.initializing],
             auto_transitions=False,
             send_event=True,
         )
@@ -99,6 +124,27 @@ class ActorStateMachine(BaseStateMachine):
         )[0]
         transition.before.append(_release_resources)
 
+        transition = self.get_transitions(
+            "start",
+            actor_state.starting.value.resources_acquired,
+            actor_state.starting.value.tasks_started,
+        )[0]
+
+        transition.before.append(_maybe_acquire_task_group)
+
 
 async def _release_resources(event_data: transitions.EventData) -> None:
     await event_data.model._exit_stack.aclose()
+
+
+async def _maybe_acquire_task_group(event_data: EventData) -> None:
+    self_ = event_data.model
+
+    try:
+        task_group: TaskGroup = event_data.kwargs["task_group"]
+    except KeyError:
+        # TODO: Log in case we're creating our own task group
+        task_group: TaskGroup = anyio.create_task_group()
+        await self_._exit_stack.enter_async_context(task_group)
+
+    self_._task_group = task_group
