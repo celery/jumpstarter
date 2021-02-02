@@ -149,6 +149,26 @@ class Actor:
 
     @classmethod
     def draw_state_machine_graph(cls, path: str) -> None:
-        cls._state_machine.get_graph().draw(path, prog="dot")
+        graph = cls._state_machine.get_graph()
+        graph.node_attr['style'] = 'filled'
+        for node in graph.iternodes():
+            name: str = str(node)
+            if name in ('initializing', 'initialized'):
+                node.attr['fillcolor'] = "#fcf8e8"
+            elif name.startswith('starting'):
+                node.attr['fillcolor'] = "#74c7b8"
+            elif name.startswith('started'):
+                color = "#16c79a"
+                if name.endswith('degraded'):
+                    color = "#ffc764"
+                elif name.endswith("unhealthy"):
+                    color = "#ef4f4f"
+                node.attr['fillcolor'] = color
+            elif name.startswith('stopping'):
+                node.attr['fillcolor'] = "#ee9595"
+            elif name in ('stopped', 'crashed'):
+                node.attr['fillcolor'] = "#ef4f4f"
+
+        graph.draw(path, prog="circo")
 
     # endregion
