@@ -65,7 +65,7 @@ class ActorStateMachine(BaseStateMachine):
         self._create_shutdown_transitions(actor_state)
         self._create_restart_transitions(actor_state)
         self.add_transition("report_error", "*", actor_state.crashed)
-        self._create_pause_resume_transitions(actor_state)
+        self._create_started_substates_transitions(actor_state)
 
         transition = self.get_transitions(
             "stop",
@@ -74,7 +74,7 @@ class ActorStateMachine(BaseStateMachine):
         )[0]
         transition.before.append(_release_resources)
 
-    def _create_pause_resume_transitions(self, actor_state):
+    def _create_started_substates_transitions(self, actor_state):
         self.add_transition(
             "pause", actor_state.started.value.running, actor_state.started.value.paused
         )
@@ -82,6 +82,31 @@ class ActorStateMachine(BaseStateMachine):
             "resume",
             actor_state.started.value.paused,
             actor_state.started.value.running,
+        )
+
+        self.add_transition(
+            "recover",
+            [
+                actor_state.started.value.running.value.degraded,
+                actor_state.started.value.running.value.unhealthy,
+            ],
+            actor_state.started.value.running.value.healthy,
+        )
+        self.add_transition(
+            "report_warning",
+            [
+                actor_state.started.value.running.value.healthy,
+                actor_state.started.value.running.value.unhealthy,
+            ],
+            actor_state.started.value.running.value.degraded,
+        )
+        self.add_transition(
+            "report_problem",
+            [
+                actor_state.started.value.running.value.degraded,
+                actor_state.started.value.running.value.healthy,
+            ],
+            actor_state.started.value.running.value.unhealthy,
         )
 
     def _create_restart_transitions(self, actor_state):
