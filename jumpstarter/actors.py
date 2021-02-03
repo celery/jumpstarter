@@ -3,6 +3,7 @@ import sys
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
+from copy import deepcopy
 from uuid import UUID, uuid4
 
 import anyio
@@ -15,14 +16,64 @@ from jumpstarter.resources import (
     is_synchronous_resource,
     resource,
 )
-from jumpstarter.states import ActorStateMachine
+from jumpstarter.states import ActorState, ActorStateMachine
+
+
+class ActorStateMachineFactory(dict):
+    def __missing__(self, key: typing.Type):
+        # We can't check for actor type during module initialization
+        # so we check if the Actor class is already defined instead.
+        # If it's not, we simply assume that this is the state machine for the Actor class.
+        try:
+            Actor
+        except NameError:
+            state_machine: ActorStateMachine = ActorStateMachine(
+                actor_state=key.actor_state
+            )
+            self[key] = state_machine
+            return state_machine
+        else:
+            if key is Actor:
+                state_machine: ActorStateMachine = ActorStateMachine(
+                    actor_state=key.actor_state
+                )
+                self[key] = state_machine
+                return state_machine
+
+        bases = key.__bases__
+        actor_bases = sum(1 for base in bases if issubclass(base, Actor))
+        if actor_bases == 0:
+            raise TypeError("No base actor found.")
+
+        if actor_bases > 1:
+            raise TypeError(
+                "Inheritance from multiple Actor base classes is not supported."
+            )
+
+        actor_base_class = next(base for base in bases if issubclass(base, Actor))
+
+        if actor_base_class.actor_state is not key.actor_state:
+            raise TypeError(
+                f"The actor state of {key}, {key.actor_state}, "
+                f"must be of the same type as the actor state of {actor_base_class} "
+                f"which uses {actor_base_class.actor_state}.\n"
+                "Using a different actor state is currently unsupported."
+            )
+
+        state_machine: ActorStateMachine = ActorStateMachine(
+            actor_state=deepcopy(actor_base_class._state_machine), inherited=True
+        )
+        self[key] = state_machine
+        return state_machine
 
 
 class Actor:
     # region Class Attributes
     __state_machine: typing.ClassVar[
-        typing.Dict[typing.Type, ActorStateMachine]
-    ] = defaultdict(ActorStateMachine)
+        ActorStateMachineFactory
+    ] = ActorStateMachineFactory()
+
+    actor_state = ActorState
 
     __global_worker_threads_capacity_limiter = None
 
@@ -66,40 +117,8 @@ class Actor:
         )
         self.__actor_id = actor_id or uuid4()
 
-    def __init_subclass__(cls, **kwargs):
-        for base in cls.__bases__:
-            base_state_machine = getattr(base, "_state_machine", None)
-
-            if base_state_machine:
-                for this_state, that_state in zip(
-                    cls._state_machine.states.values(),
-                    base_state_machine.states.values(),
-                ):
-                    this_state.on_enter.extend(that_state.on_enter)
-                    this_state.on_exit.extend(that_state.on_exit)
-
-                for this_transition, that_transition in zip(
-                    cls._state_machine.get_transitions(),
-                    base_state_machine.get_transitions(),
-                ):
-                    this_transition.prepare.extend(that_transition.prepare)
-                    this_transition.before.extend(
-                        list(
-                            filter(
-                                lambda x: getattr(x, "__name__", None)
-                                != "_release_resources",
-                                that_transition.before,
-                            )
-                        )
-                    )
-                    this_transition.after.extend(
-                        list(
-                            filter(
-                                lambda x: x not in ("start", "stop"),
-                                that_transition.after,
-                            )
-                        )
-                    )
+    def __init_subclass__(cls, actor_state: typing.Optional[ActorState] = ActorState):
+        cls.actor_state = actor_state
 
     # endregion
 
@@ -113,7 +132,7 @@ class Actor:
         self, resource: typing.AsyncContextManager, name: str
     ) -> None:
         if self._resources.get(name, None):
-            raise ResourceAlreadyExistsError(name)
+            raise ResourceAlreadyExistsError(name, self._resources[name])
 
         if is_synchronous_resource(resource):
             cls = type(self)

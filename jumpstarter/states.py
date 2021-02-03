@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 from enum import Enum, auto
 
 import transitions
+from transitions import EventData
+from transitions.core import _LOGGER
+from transitions.extensions.asyncio import AsyncTransition
 from transitions.extensions.nesting import NestedState
 
 try:
@@ -47,32 +52,48 @@ class ActorState(Enum):
     crashed = auto()
 
 
+class AsyncTransitionWithLogging(AsyncTransition):
+    async def execute(self, event_data: EventData) -> bool:
+        _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name, self.before)
+        _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name, self.after)
+
+        return await super().execute(event_data)
+
+
 class ActorStateMachine(BaseStateMachine):
-    def __init__(self, actor_state=ActorState):
-        super().__init__(
-            states=actor_state,
-            initial=actor_state.initializing,
-            auto_transitions=False,
-            send_event=True,
-        )
+    transition_cls = AsyncTransitionWithLogging
 
-        started_state = self.get_state(actor_state.started)
-        started_state.initial = actor_state.started.value.running
-        running_state = self.get_state(actor_state.started.value.running)
-        running_state.initial = actor_state.started.value.running.value.healthy
+    def __init__(
+        self,
+        actor_state: ActorState | ActorStateMachine = ActorState,
+        inherited: bool = False,
+    ):
+        if inherited:
+            base_actor_state_machine = actor_state
+            super().__init__(
+                states=base_actor_state_machine,
+                initial=base_actor_state_machine.initial,
+                auto_transitions=False,
+                send_event=True,
+            )
+        else:
+            super().__init__(
+                states=actor_state,
+                initial=actor_state.initializing,
+                auto_transitions=False,
+                send_event=True,
+            )
 
-        self._create_bootup_transitions(actor_state)
-        self._create_shutdown_transitions(actor_state)
-        self._create_restart_transitions(actor_state)
-        self.add_transition("report_error", "*", actor_state.crashed)
-        self._create_started_substates_transitions(actor_state)
+            self._create_bootup_transitions(actor_state)
+            self._create_shutdown_transitions(actor_state)
+            self._create_restart_transitions(actor_state)
+            self.add_transition("report_error", "*", actor_state.crashed)
+            self._create_started_substates_transitions(actor_state)
 
-        transition = self.get_transitions(
-            "stop",
-            actor_state.stopping.value.tasks_stopped,
-            actor_state.stopping.value.resources_released,
-        )[0]
-        transition.before.append(_release_resources)
+            started_state = self.get_state(actor_state.started)
+            started_state.initial = actor_state.started.value.running
+            running_state = self.get_state(actor_state.started.value.running)
+            running_state.initial = actor_state.started.value.running.value.healthy
 
     def _create_started_substates_transitions(self, actor_state):
         self.add_transition(
@@ -130,6 +151,13 @@ class ActorStateMachine(BaseStateMachine):
         self.add_transition(
             "stop", actor_state.stopping.value.dependencies_stopped, actor_state.stopped
         )
+
+        transition = self.get_transitions(
+            "stop",
+            actor_state.stopping.value.tasks_stopped,
+            actor_state.stopping.value.resources_released,
+        )[0]
+        transition.before.append(_release_resources)
 
     def _create_bootup_transitions(self, actor_state):
         self.add_transition('initialize', actor_state.initializing, actor_state.initialized)
