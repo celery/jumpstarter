@@ -120,8 +120,15 @@ class Actor:
         )
         self.__actor_id = actor_id or uuid4()
 
-    def __init_subclass__(cls, actor_state: typing.Optional[ActorState] = ActorState):
+    def __init_subclass__(
+        cls, *, actor_state: typing.Optional[ActorState] = ActorState
+    ):
         cls.actor_state = actor_state
+
+        if not issubclass(actor_state, ActorState):
+            raise TypeError(
+                f"Actor states must be ActorState or a child class of it. Instead we got {actor_state.__name__}."
+            )
 
     # endregion
 
