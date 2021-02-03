@@ -90,11 +90,6 @@ class ActorStateMachine(BaseStateMachine):
             self.add_transition("report_error", "*", actor_state.crashed)
             self._create_started_substates_transitions(actor_state)
 
-            started_state = self.get_state(actor_state.started)
-            started_state.initial = actor_state.started.value.running
-            running_state = self.get_state(actor_state.started.value.running)
-            running_state.initial = actor_state.started.value.running.value.healthy
-
     def _create_started_substates_transitions(self, actor_state):
         self.add_transition(
             "pause", actor_state.started.value.running, actor_state.started.value.paused
@@ -102,7 +97,7 @@ class ActorStateMachine(BaseStateMachine):
         self.add_transition(
             "resume",
             actor_state.started.value.paused,
-            actor_state.started.value.running,
+            actor_state.started.value.running.value.healthy,
         )
 
         self.add_transition(
@@ -170,13 +165,17 @@ class ActorStateMachine(BaseStateMachine):
                 actor_state.starting.value.dependencies_started,
                 actor_state.starting.value.resources_acquired,
                 actor_state.starting.value.tasks_started,
+                actor_state.started,
+                actor_state.started.value.running,
             ],
             trigger="start",
             loop=False,
             after="start",
         )
         self.add_transition(
-            "start", actor_state.starting.value.tasks_started, actor_state.started
+            "start",
+            actor_state.started.value.running,
+            actor_state.started.value.running.value.healthy,
         )
 
 

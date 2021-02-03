@@ -18,9 +18,21 @@ async def test_child_actors_do_not_share_the_same_callbacks():
         def bar(self):
             return object()
 
-    transition1 = FakeActor1._state_machine.get_transitions("start", ActorStartingState.dependencies_started, ActorStartingState.resources_acquired)[0]
-    transition2 = FakeActor2._state_machine.get_transitions("start", ActorStartingState.dependencies_started, ActorStartingState.resources_acquired)[0]
-    transition3 = Actor._state_machine.get_transitions("start", ActorStartingState.dependencies_started, ActorStartingState.resources_acquired)[0]
+    transition1 = FakeActor1._state_machine.get_transitions(
+        "start",
+        ActorStartingState.dependencies_started,
+        ActorStartingState.resources_acquired,
+    )[0]
+    transition2 = FakeActor2._state_machine.get_transitions(
+        "start",
+        ActorStartingState.dependencies_started,
+        ActorStartingState.resources_acquired,
+    )[0]
+    transition3 = Actor._state_machine.get_transitions(
+        "start",
+        ActorStartingState.dependencies_started,
+        ActorStartingState.resources_acquired,
+    )[0]
 
     assert transition1.before is not transition2.before
     assert transition3.before is not transition1.before
