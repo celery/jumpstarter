@@ -60,6 +60,9 @@ class ActorStateMachineFactory(dict):
                 "Using a different actor state is currently unsupported."
             )
 
+        # We must deepcopy here or otherwise transitions copies the state machine's callbacks by **reference**
+        # This results in callbacks registered in one actor ending up in another.
+        # TODO: Remove the deepcopy once https://github.com/pytransitions/transitions/issues/509 is resolved
         state_machine: ActorStateMachine = ActorStateMachine(
             actor_state=deepcopy(actor_base_class._state_machine), inherited=True
         )
