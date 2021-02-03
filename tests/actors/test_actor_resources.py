@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from tests.mock import AsyncMock, MagicMock, sentinel
 
 import anyio
 import pytest
@@ -162,7 +162,7 @@ async def test_resource_is_immutable():
 
 async def test_resource_accessor(subtests):
     resource_mock = AsyncMock()
-    resource_mock.__aenter__.return_value = resource_mock
+    resource_mock.__aenter__.return_value = sentinel.RETURN_VALUE
 
     class FakeActor(Actor):
         @resource
@@ -174,7 +174,7 @@ async def test_resource_accessor(subtests):
     await fake_actor.start()
 
     with subtests.test("resource is accessible once acquired"):
-        assert fake_actor.resource is resource_mock
+        assert fake_actor.resource is sentinel.RETURN_VALUE
 
     await fake_actor.stop()
 
