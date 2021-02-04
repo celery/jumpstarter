@@ -10,7 +10,7 @@ def test(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
     session.run("poetry", "install", external=True)
-    session.run("pytest", "-nauto")
+    session.run("pytest", "-nauto", "--cov=jumpstarter", "--cov-branch", "--cov-report=xml")
 
 
 @nox.session
