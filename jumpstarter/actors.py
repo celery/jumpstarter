@@ -173,7 +173,7 @@ class Actor:
 
         # Edge colors
         for edge in graph.iteredges():
-            destination = edge[1]
+            destination: str = edge[1]
             if destination in ('crashed', 'stopped'):
                 edge.attr['color'] = "#ef4f4f"
             elif destination == 'initialized':
