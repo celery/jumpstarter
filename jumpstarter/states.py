@@ -1,3 +1,4 @@
+import typing
 from enum import Enum, auto
 
 import transitions
@@ -48,6 +49,8 @@ class ActorState(Enum):
 
 
 class ActorStateMachine(BaseStateMachine):
+    # region Dunder methods
+
     def __init__(self, actor_state=ActorState):
         super().__init__(
             states=actor_state,
@@ -73,6 +76,19 @@ class ActorStateMachine(BaseStateMachine):
             actor_state.stopping.value.resources_released,
         )[0]
         transition.before.append(_release_resources)
+
+        self._parallel_state_machines: typing.List[BaseStateMachine] = []
+
+    # endregion
+
+    # region Public API
+
+    def register_parallel_state_machine(self, machine: BaseStateMachine) -> None:
+        self._parallel_state_machines.append(machine)
+
+    # endregion
+
+    # region Protected API
 
     def _create_crashed_transitions(self, actor_state):
         self.add_transition("report_error", "*", actor_state.crashed)
@@ -154,6 +170,8 @@ class ActorStateMachine(BaseStateMachine):
         self.add_transition(
             "start", actor_state.starting.value.tasks_started, actor_state.started
         )
+
+    # endregion
 
 
 async def _release_resources(event_data: transitions.EventData) -> None:
