@@ -64,7 +64,7 @@ class ActorStateMachine(BaseStateMachine):
         self._create_bootup_transitions(actor_state)
         self._create_shutdown_transitions(actor_state)
         self._create_restart_transitions(actor_state)
-        self.add_transition("report_error", "*", actor_state.crashed)
+        self._create_crashed_transitions(actor_state)
         self._create_started_substates_transitions(actor_state)
 
         transition = self.get_transitions(
@@ -73,6 +73,10 @@ class ActorStateMachine(BaseStateMachine):
             actor_state.stopping.value.resources_released,
         )[0]
         transition.before.append(_release_resources)
+
+    def _create_crashed_transitions(self, actor_state):
+        self.add_transition("report_error", "*", actor_state.crashed)
+        self.add_transition("start", actor_state.crashed, actor_state.starting)
 
     def _create_started_substates_transitions(self, actor_state):
         self.add_transition(
