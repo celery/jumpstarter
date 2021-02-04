@@ -9,7 +9,8 @@ try:
 except ImportError:
     from transitions_anyio import HierarchicalAnyIOMachine as BaseStateMachine
 else:
-    from transitions_anyio import HierarchicalAnyIOGraphMachine as BaseStateMachine
+    from transitions_anyio import \
+        HierarchicalAnyIOGraphMachine as BaseStateMachine
 
 NestedState.separator = "↦"
 
@@ -57,6 +58,7 @@ class ActorStateMachine(BaseStateMachine):
             initial=actor_state.initializing,
             auto_transitions=False,
             send_event=True,
+            model_attribute="_state",
         )
 
         started_state = self.get_state(actor_state.started)
@@ -152,7 +154,9 @@ class ActorStateMachine(BaseStateMachine):
         )
 
     def _create_bootup_transitions(self, actor_state):
-        self.add_transition('initialize', actor_state.initializing, actor_state.initialized)
+        self.add_transition(
+            "initialize", actor_state.initializing, actor_state.initialized
+        )
 
         self.add_ordered_transitions(
             states=[
