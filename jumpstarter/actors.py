@@ -28,14 +28,14 @@ class ActorStateMachineFactory(dict):
             Actor
         except NameError:
             state_machine: ActorStateMachine = ActorStateMachine(
-                actor_state=key.actor_state
+                actor_state=key.actor_state, name="Actor"
             )
             self[key] = state_machine
             return state_machine
         else:
             if key is Actor:
                 state_machine: ActorStateMachine = ActorStateMachine(
-                    actor_state=key.actor_state
+                    actor_state=key.actor_state, name="Actor"
                 )
                 self[key] = state_machine
                 return state_machine
@@ -64,7 +64,9 @@ class ActorStateMachineFactory(dict):
         # This results in callbacks registered in one actor ending up in another.
         # TODO: Remove the deepcopy once https://github.com/pytransitions/transitions/issues/509 is resolved
         state_machine: ActorStateMachine = ActorStateMachine(
-            actor_state=deepcopy(actor_base_class._state_machine), inherited=True
+            actor_state=deepcopy(actor_base_class._state_machine),
+            inherited=True,
+            name=key.__qualname__,
         )
         self[key] = state_machine
         return state_machine
@@ -179,45 +181,45 @@ class Actor:
     @classmethod
     def draw_state_machine_graph(cls, path: str) -> None:
         graph = cls._state_machine.get_graph()
-        graph.node_attr['style'] = 'filled'
+        graph.node_attr["style"] = "filled"
 
         # Node colors
         for node in graph.iternodes():
             name: str = str(node)
-            if name in ('initializing', 'initialized'):
-                node.attr['fillcolor'] = "#fcf8e8"
-            elif name.startswith('starting'):
-                node.attr['fillcolor'] = "#74c7b8"
-            elif name.startswith('started'):
+            if name in ("initializing", "initialized"):
+                node.attr["fillcolor"] = "#fcf8e8"
+            elif name.startswith("starting"):
+                node.attr["fillcolor"] = "#74c7b8"
+            elif name.startswith("started"):
                 color = "#16c79a"
-                if name.endswith('degraded'):
+                if name.endswith("degraded"):
                     color = "#ffc764"
                 elif name.endswith("unhealthy"):
                     color = "#ef4f4f"
-                node.attr['fillcolor'] = color
-            elif name.startswith('stopping'):
-                node.attr['fillcolor'] = "#ee9595"
-            elif name in ('stopped', 'crashed'):
-                node.attr['fillcolor'] = "#ef4f4f"
+                node.attr["fillcolor"] = color
+            elif name.startswith("stopping"):
+                node.attr["fillcolor"] = "#ee9595"
+            elif name in ("stopped", "crashed"):
+                node.attr["fillcolor"] = "#ef4f4f"
 
         # Edge colors
         for edge in graph.iteredges():
             destination: str = edge[1]
-            if destination in ('crashed', 'stopped'):
-                edge.attr['color'] = "#ef4f4f"
-            elif destination == 'initialized':
-                edge.attr['color'] = "#ffc764"
-            elif destination.startswith('starting'):
-                edge.attr['color'] = "#74c7b8"
-            elif destination.startswith('started'):
+            if destination in ("crashed", "stopped"):
+                edge.attr["color"] = "#ef4f4f"
+            elif destination == "initialized":
+                edge.attr["color"] = "#ffc764"
+            elif destination.startswith("starting"):
+                edge.attr["color"] = "#74c7b8"
+            elif destination.startswith("started"):
                 color = "#16c79a"
-                if destination.endswith('degraded'):
+                if destination.endswith("degraded"):
                     color = "#ffc764"
                 elif destination.endswith("unhealthy"):
                     color = "#ef4f4f"
-                edge.attr['color'] = color
-            elif destination.startswith('stopping'):
-                edge.attr['color'] = "#ee9595"
+                edge.attr["color"] = color
+            elif destination.startswith("stopping"):
+                edge.attr["color"] = "#ee9595"
 
         graph.draw(path, prog="circo")
 

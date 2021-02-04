@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import typing
 from enum import Enum, auto
 
 import transitions
@@ -66,6 +67,7 @@ class ActorStateMachine(BaseStateMachine):
     def __init__(
         self,
         actor_state: ActorState | ActorStateMachine = ActorState,
+        name: typing.Optional[str] = None,
         inherited: bool = False,
     ):
         if inherited:
@@ -75,6 +77,7 @@ class ActorStateMachine(BaseStateMachine):
                 initial=base_actor_state_machine.initial,
                 auto_transitions=False,
                 send_event=True,
+                name=name,
             )
         else:
             super().__init__(
@@ -82,6 +85,7 @@ class ActorStateMachine(BaseStateMachine):
                 initial=actor_state.initializing,
                 auto_transitions=False,
                 send_event=True,
+                name=name,
             )
 
             self._create_bootup_transitions(actor_state)
@@ -155,7 +159,9 @@ class ActorStateMachine(BaseStateMachine):
         transition.before.append(_release_resources)
 
     def _create_bootup_transitions(self, actor_state):
-        self.add_transition('initialize', actor_state.initializing, actor_state.initialized)
+        self.add_transition(
+            "initialize", actor_state.initializing, actor_state.initialized
+        )
 
         self.add_ordered_transitions(
             states=[

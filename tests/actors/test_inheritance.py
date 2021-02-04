@@ -70,6 +70,7 @@ async def test_actor_state_must_be_of_the_correct_type():
         class FakeActor(Actor, actor_state=object):
             ...
 
+
 # TODO: Figure out how to resolve actor state extension.
 # async def test_child_actor_state_must_be_the_same_as_the_parent_actor_state():
 #     class BaseActor(Actor):
@@ -141,3 +142,14 @@ async def test_base_actor_state_machine_is_created():
     factory = ActorStateMachineFactory()
     m = factory[Actor]
     assert m is factory[Actor]
+
+
+async def test_state_machine_name_is_set():
+    factory = ActorStateMachineFactory()
+
+    assert factory[Actor].name == 'Actor: '
+
+    class FakeActor(Actor):
+        ...
+
+    assert factory[FakeActor].name == f'{FakeActor.__qualname__}: '
