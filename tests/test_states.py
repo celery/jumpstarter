@@ -38,8 +38,8 @@ def state_machine(m):
 async def test_start(subtests, state_machine, m):
     await state_machine.start()
 
-    with subtests.test("actor state is started->running"):
-        assert state_machine.state == ActorRunningState.healthy
+    with subtests.test("actor state is started->running->healthy"):
+        assert state_machine._state == ActorRunningState.healthy
 
     with subtests.test("states are transitioned in order"):
         m.assert_has_calls(
@@ -69,8 +69,8 @@ async def test_stop(subtests, state_machine, m):
     state_machine.set_state("started↦running↦healthy")
     await state_machine.stop()
 
-    with subtests.test("actor state is started"):
-        assert state_machine.is_stopped(), state_machine.state
+    with subtests.test("actor state is stopped"):
+        assert state_machine.is_stopped(), state_machine._state
 
     with subtests.test("states are transitioned in order"):
         m.assert_has_calls(
@@ -98,8 +98,8 @@ async def test_stop_paused(subtests, state_machine, m):
     await state_machine.pause()
     await state_machine.stop()
 
-    with subtests.test("actor state is started"):
-        assert state_machine.is_stopped(), state_machine.state
+    with subtests.test("actor state is stopped"):
+        assert state_machine.is_stopped(), state_machine._state
 
     with subtests.test("states are transitioned in order"):
         m.assert_has_calls(

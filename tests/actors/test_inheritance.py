@@ -64,9 +64,10 @@ async def test_resource_inheritance():
 
 async def test_actor_state_must_be_of_the_correct_type():
     with pytest.raises(
-            TypeError,
-            match="Actor states must be ActorState or a child class of it. Instead we got object.",
+        TypeError,
+        match="Actor states must be ActorState or a child class of it. Instead we got object.",
     ):
+
         class FakeActor(Actor, actor_state=object):
             ...
 
@@ -109,7 +110,7 @@ async def test_same_state_machine_is_returned_for_each_actor(subtests):
         assert len(list(factory.values())) == 2
 
     with subtests.test(
-            "The new state machine for FakeActor1 is not the same as the one for FakeActor2"
+        "The new state machine for FakeActor1 is not the same as the one for FakeActor2"
     ):
         assert m1 is not m2
 
@@ -132,8 +133,8 @@ async def test_only_single_inheritance_is_supported():
 
     factory = ActorStateMachineFactory()
     with pytest.raises(
-            TypeError,
-            match="Inheritance from multiple Actor base classes is not supported.",
+        TypeError,
+        match="Inheritance from multiple Actor base classes is not supported.",
     ):
         _ = factory[FakeActor]
 
@@ -147,9 +148,9 @@ async def test_base_actor_state_machine_is_created():
 async def test_state_machine_name_is_set():
     factory = ActorStateMachineFactory()
 
-    assert factory[Actor].name == 'Actor: '
+    assert factory[Actor].name == "Actor: "
 
     class FakeActor(Actor):
         ...
 
-    assert factory[FakeActor].name == f'{FakeActor.__qualname__}: '
+    assert factory[FakeActor].name == f"{FakeActor.__qualname__}: "

@@ -9,13 +9,10 @@ from uuid import UUID, uuid4
 import anyio
 from anyio.abc import CapacityLimiter
 
-from jumpstarter.resources import (
-    NotAResourceError,
-    ResourceAlreadyExistsError,
-    ThreadedContextManager,
-    is_synchronous_resource,
-    resource,
-)
+from jumpstarter.resources import (NotAResourceError,
+                                   ResourceAlreadyExistsError,
+                                   ThreadedContextManager,
+                                   is_synchronous_resource, resource)
 from jumpstarter.states import ActorState, ActorStateMachine
 
 
@@ -135,6 +132,19 @@ class Actor:
     # endregion
 
     # region Public API
+
+    @property
+    def state(self) -> typing.Union[typing.Dict[str, typing.Any], typing.Any]:
+        parallel_states = {
+            machine.name[:-2]: machine.get_model_state(self)
+            for machine in self._state_machine._parallel_state_machines
+        }
+
+        if parallel_states:
+            parallel_states[self._state_machine.name[:-2]] = self._state
+            return parallel_states
+
+        return self._state
 
     @property
     def actor_id(self):

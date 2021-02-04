@@ -14,7 +14,8 @@ try:
 except ImportError:
     from transitions_anyio import HierarchicalAnyIOMachine as BaseStateMachine
 else:
-    from transitions_anyio import HierarchicalAnyIOGraphMachine as BaseStateMachine
+    from transitions_anyio import \
+        HierarchicalAnyIOGraphMachine as BaseStateMachine
 
 NestedState.separator = "↦"
 
@@ -64,6 +65,8 @@ class AsyncTransitionWithLogging(AsyncTransition):
 class ActorStateMachine(BaseStateMachine):
     transition_cls = AsyncTransitionWithLogging
 
+    # region Dunder methods
+
     def __init__(
         self,
         actor_state: ActorState | ActorStateMachine = ActorState,
@@ -78,6 +81,7 @@ class ActorStateMachine(BaseStateMachine):
                 auto_transitions=False,
                 send_event=True,
                 name=name,
+                model_attribute="_state",
             )
         else:
             super().__init__(
@@ -86,13 +90,31 @@ class ActorStateMachine(BaseStateMachine):
                 auto_transitions=False,
                 send_event=True,
                 name=name,
+                model_attribute="_state",
             )
 
             self._create_bootup_transitions(actor_state)
             self._create_shutdown_transitions(actor_state)
             self._create_restart_transitions(actor_state)
-            self.add_transition("report_error", "*", actor_state.crashed)
+            self._create_crashed_transitions(actor_state)
             self._create_started_substates_transitions(actor_state)
+
+        self._parallel_state_machines: typing.List[BaseStateMachine] = []
+
+    # endregion
+
+    # region Public API
+
+    def register_parallel_state_machine(self, machine: BaseStateMachine) -> None:
+        self._parallel_state_machines.append(machine)
+
+    # endregion
+
+    # region Protected API
+
+    def _create_crashed_transitions(self, actor_state):
+        self.add_transition("report_error", "*", actor_state.crashed)
+        self.add_transition("start", actor_state.crashed, actor_state.starting)
 
     def _create_started_substates_transitions(self, actor_state):
         self.add_transition(
@@ -183,6 +205,8 @@ class ActorStateMachine(BaseStateMachine):
             actor_state.started.value.running,
             actor_state.started.value.running.value.healthy,
         )
+
+    # endregion
 
 
 async def _release_resources(event_data: transitions.EventData) -> None:
