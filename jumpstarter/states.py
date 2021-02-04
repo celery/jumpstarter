@@ -132,6 +132,8 @@ class ActorStateMachine(BaseStateMachine):
         )
 
     def _create_bootup_transitions(self, actor_state):
+        self.add_transition('initialize', actor_state.initializing, actor_state.initialized)
+
         self.add_ordered_transitions(
             states=[
                 actor_state.initializing,
