@@ -151,6 +151,8 @@ class Actor:
     def draw_state_machine_graph(cls, path: str) -> None:
         graph = cls._state_machine.get_graph()
         graph.node_attr['style'] = 'filled'
+
+        # Node colors
         for node in graph.iternodes():
             name: str = str(node)
             if name in ('initializing', 'initialized'):
@@ -168,6 +170,25 @@ class Actor:
                 node.attr['fillcolor'] = "#ee9595"
             elif name in ('stopped', 'crashed'):
                 node.attr['fillcolor'] = "#ef4f4f"
+
+        # Edge colors
+        for edge in graph.iteredges():
+            destination = edge[1]
+            if destination in ('crashed', 'stopped'):
+                edge.attr['color'] = "#ef4f4f"
+            elif destination == 'initialized':
+                edge.attr['color'] = "#ffc764"
+            elif destination.startswith('starting'):
+                edge.attr['color'] = "#74c7b8"
+            elif destination.startswith('started'):
+                color = "#16c79a"
+                if destination.endswith('degraded'):
+                    color = "#ffc764"
+                elif destination.endswith("unhealthy"):
+                    color = "#ef4f4f"
+                edge.attr['color'] = color
+            elif destination.startswith('stopping'):
+                edge.attr['color'] = "#ee9595"
 
         graph.draw(path, prog="circo")
 
