@@ -6,7 +6,7 @@ from enum import Enum, auto
 import transitions
 from transitions import EventData
 from transitions.core import _LOGGER
-from transitions.extensions.asyncio import AsyncTransition
+from transitions.extensions.asyncio import NestedAsyncTransition
 from transitions.extensions.nesting import NestedState
 
 try:
@@ -14,10 +14,20 @@ try:
 except ImportError:
     from transitions_anyio import HierarchicalAnyIOMachine as BaseStateMachine
 else:
-    from transitions_anyio import \
-        HierarchicalAnyIOGraphMachine as BaseStateMachine
+    from transitions_anyio import HierarchicalAnyIOGraphMachine as BaseStateMachine
 
 NestedState.separator = "↦"
+
+
+class ChildStateEnum(dict):
+    def __init__(self, children, initial):
+        super(ChildStateEnum, self).__init__(children=children, initial=initial)
+
+    def __getattr__(self, item):
+        try:
+            return super().__getattr__(item)
+        except AttributeError:
+            return getattr(self["children"], item)
 
 
 class ActorStartingState(Enum):
@@ -39,7 +49,9 @@ class ActorRunningState(Enum):
 
 
 class ActorStartedState(Enum):
-    running = ActorRunningState
+    running = ChildStateEnum(
+        children=ActorRunningState, initial=ActorRunningState.healthy
+    )
     paused = auto()
 
 
@@ -48,13 +60,15 @@ class ActorState(Enum):
     initialized = auto()
     # restarting = ActorRestartState
     starting = ActorStartingState
-    started = ActorStartedState
+    started = ChildStateEnum(
+        children=ActorStartedState, initial=ActorStartedState.running
+    )
     stopping = ActorStoppingState
     stopped = auto()
     crashed = auto()
 
 
-class AsyncTransitionWithLogging(AsyncTransition):
+class AsyncTransitionWithLogging(NestedAsyncTransition):
     async def execute(self, event_data: EventData) -> bool:
         _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name, self.before)
         _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name, self.after)
@@ -193,8 +207,6 @@ class ActorStateMachine(BaseStateMachine):
                 actor_state.starting.value.dependencies_started,
                 actor_state.starting.value.resources_acquired,
                 actor_state.starting.value.tasks_started,
-                actor_state.started,
-                actor_state.started.value.running,
             ],
             trigger="start",
             loop=False,
@@ -202,8 +214,8 @@ class ActorStateMachine(BaseStateMachine):
         )
         self.add_transition(
             "start",
-            actor_state.started.value.running,
-            actor_state.started.value.running.value.healthy,
+            actor_state.starting.value.tasks_started,
+            actor_state.started,
         )
 
     # endregion
