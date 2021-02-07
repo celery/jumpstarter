@@ -138,10 +138,11 @@ class Actor:
 
     @property
     def state(self) -> typing.Union[typing.Dict[str, typing.Any], typing.Any]:
-        parallel_states = {
-            machine.name[:-2]: machine.get_model_state(self)
-            for machine in self._state_machine._parallel_state_machines
-        }
+        parallel_states: typing.Dict[str, typing.Any] = {}
+        for machine in self._state_machine._parallel_state_machines:
+            if machine._state.name == "ignore":
+                continue
+            parallel_states[machine.name[:-2]] = machine.get_model_state(self)
 
         if parallel_states:
             parallel_states[self._state_machine.name[:-2]] = self._state

@@ -55,10 +55,22 @@ class ActorStartedState(Enum):
     paused = auto()
 
 
+class ActorRestartingState(Enum):
+    starting = auto()
+    stopping = auto()
+
+
+class ActorRestartState(Enum):
+    ignore = auto()
+    restarting = ChildStateEnum(
+        children=ActorRestartingState, initial=ActorRestartingState.starting
+    )
+    restarted = auto()
+
+
 class ActorState(Enum):
     initializing = auto()
     initialized = auto()
-    # restarting = ActorRestartState
     starting = ActorStartingState
     started = ChildStateEnum(
         children=ActorStartedState, initial=ActorStartedState.running
@@ -74,6 +86,37 @@ class AsyncTransitionWithLogging(NestedAsyncTransition):
         _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name, self.after)
 
         return await super().execute(event_data)
+
+
+class ActorRestartStateMachine(BaseStateMachine):
+    def __init__(self, restart_state: ActorRestartState = ActorRestartState):
+        super(ActorRestartStateMachine, self).__init__(
+            states=restart_state,
+            initial=restart_state.ignore,
+            model_attribute="_state",
+            auto_transitions=False,
+            send_event=True,
+        )
+
+        self.add_transition(
+            "restart", restart_state.ignore, restart_state.restarting, after="restart"
+        )
+        self.add_transition(
+            "restart",
+            restart_state.restarting.value.starting,
+            restart_state.restarting.value.stopping,
+            after="restart",
+        )
+        self.add_transition(
+            "restart", restart_state.restarting.value.stopping, restart_state.restarted
+        )
+
+        self.add_transition(
+            "restart",
+            restart_state.restarted,
+            restart_state.restarting,
+            after="restart",
+        )
 
 
 class ActorStateMachine(BaseStateMachine):
