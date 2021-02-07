@@ -5,6 +5,13 @@ import nox_poetry.patch  # noqa: F401
 from nox.sessions import Session
 
 
+@nox.session
+def build_docs(session: Session):
+    session.install(".")
+    session.run("poetry", "install", external=True)
+    session.run("sphinx-build", "-b", "html", "-j", "auto", "docs/", "docs/_build/_html")
+
+
 @nox.session(python=("3.7", "3.8", "3.9"))
 def test(session: Session) -> None:
     """Run the test suite."""
