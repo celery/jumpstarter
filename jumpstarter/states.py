@@ -89,7 +89,11 @@ class AsyncTransitionWithLogging(NestedAsyncTransition):
 
 
 class ActorRestartStateMachine(BaseStateMachine):
-    def __init__(self, restart_state: ActorRestartState = ActorRestartState):
+    def __init__(
+        self,
+        actor_state_machine: ActorStateMachine,
+        restart_state: ActorRestartState = ActorRestartState,
+    ):
         super(ActorRestartStateMachine, self).__init__(
             states=restart_state,
             initial=restart_state.ignore,
@@ -98,8 +102,13 @@ class ActorRestartStateMachine(BaseStateMachine):
             send_event=True,
         )
 
+        self.actor_state_machine: ActorStateMachine = actor_state_machine
         self.add_transition(
-            "restart", restart_state.ignore, restart_state.restarting, after="restart"
+            "restart",
+            restart_state.ignore,
+            restart_state.restarting,
+            after="restart",
+            conditions=[self._check_if_running_or_crashed],
         )
         self.add_transition(
             "restart",
@@ -116,6 +125,14 @@ class ActorRestartStateMachine(BaseStateMachine):
             restart_state.restarted,
             restart_state.restarting,
             after="restart",
+            conditions=[self._check_if_running_or_crashed]
+        )
+
+    def _check_if_running_or_crashed(self, event_data: EventData) -> bool:
+        return (
+            self.actor_state_machine._state == ActorState.crashed
+            or self.actor_state_machine._state
+            == ActorState.started.value.running.value.healthy
         )
 
 
