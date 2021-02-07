@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 import typing
 from enum import Enum, auto
 
 import transitions
+from transitions import EventData
+from transitions.core import _LOGGER
+from transitions.extensions.asyncio import NestedAsyncTransition
 from transitions.extensions.nesting import NestedState
 
 try:
@@ -9,10 +14,20 @@ try:
 except ImportError:
     from transitions_anyio import HierarchicalAnyIOMachine as BaseStateMachine
 else:
-    from transitions_anyio import \
-        HierarchicalAnyIOGraphMachine as BaseStateMachine
+    from transitions_anyio import HierarchicalAnyIOGraphMachine as BaseStateMachine
 
 NestedState.separator = "↦"
+
+
+class ChildStateEnum(dict):
+    def __init__(self, children, initial):
+        super(ChildStateEnum, self).__init__(children=children, initial=initial)
+
+    def __getattr__(self, item):
+        try:
+            return super().__getattr__(item)
+        except AttributeError:
+            return getattr(self["children"], item)
 
 
 class ActorStartingState(Enum):
@@ -34,7 +49,9 @@ class ActorRunningState(Enum):
 
 
 class ActorStartedState(Enum):
-    running = ActorRunningState
+    running = ChildStateEnum(
+        children=ActorRunningState, initial=ActorRunningState.healthy
+    )
     paused = auto()
 
 
@@ -43,41 +60,58 @@ class ActorState(Enum):
     initialized = auto()
     # restarting = ActorRestartState
     starting = ActorStartingState
-    started = ActorStartedState
+    started = ChildStateEnum(
+        children=ActorStartedState, initial=ActorStartedState.running
+    )
     stopping = ActorStoppingState
     stopped = auto()
     crashed = auto()
 
 
+class AsyncTransitionWithLogging(NestedAsyncTransition):
+    async def execute(self, event_data: EventData) -> bool:
+        _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name, self.before)
+        _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name, self.after)
+
+        return await super().execute(event_data)
+
+
 class ActorStateMachine(BaseStateMachine):
+    transition_cls = AsyncTransitionWithLogging
+
     # region Dunder methods
 
-    def __init__(self, actor_state=ActorState):
-        super().__init__(
-            states=actor_state,
-            initial=actor_state.initializing,
-            auto_transitions=False,
-            send_event=True,
-            model_attribute="_state",
-        )
+    def __init__(
+        self,
+        actor_state: ActorState | ActorStateMachine = ActorState,
+        name: typing.Optional[str] = None,
+        inherited: bool = False,
+    ):
+        if inherited:
+            base_actor_state_machine = actor_state
+            super().__init__(
+                states=base_actor_state_machine,
+                initial=base_actor_state_machine.initial,
+                auto_transitions=False,
+                send_event=True,
+                name=name,
+                model_attribute="_state",
+            )
+        else:
+            super().__init__(
+                states=actor_state,
+                initial=actor_state.initializing,
+                auto_transitions=False,
+                send_event=True,
+                name=name,
+                model_attribute="_state",
+            )
 
-        started_state = self.get_state(actor_state.started)
-        started_state.initial = actor_state.started.value.running
-        running_state = self.get_state(actor_state.started.value.running)
-        running_state.initial = actor_state.started.value.running.value.healthy
-
-        self._create_bootup_transitions(actor_state)
-        self._create_shutdown_transitions(actor_state)
-        self._create_restart_transitions(actor_state)
-        self._create_crashed_transitions(actor_state)
-        self._create_started_substates_transitions(actor_state)
-
-        transition = self.get_transitions(
-            "stop",
-            actor_state.stopping.value.tasks_stopped,
-            actor_state.stopping.value.resources_released,
-        )[0]
-        transition.before.append(_release_resources)
+            self._create_bootup_transitions(actor_state)
+            self._create_shutdown_transitions(actor_state)
+            self._create_restart_transitions(actor_state)
+            self._create_crashed_transitions(actor_state)
+            self._create_started_substates_transitions(actor_state)
 
         self._parallel_state_machines: typing.List[BaseStateMachine] = []
 
@@ -103,7 +137,7 @@ class ActorStateMachine(BaseStateMachine):
         self.add_transition(
             "resume",
             actor_state.started.value.paused,
-            actor_state.started.value.running,
+            actor_state.started.value.running.value.healthy,
         )
 
         self.add_transition(
@@ -153,6 +187,13 @@ class ActorStateMachine(BaseStateMachine):
             "stop", actor_state.stopping.value.dependencies_stopped, actor_state.stopped
         )
 
+        transition = self.get_transitions(
+            "stop",
+            actor_state.stopping.value.tasks_stopped,
+            actor_state.stopping.value.resources_released,
+        )[0]
+        transition.before.append(_release_resources)
+
     def _create_bootup_transitions(self, actor_state):
         self.add_transition(
             "initialize", actor_state.initializing, actor_state.initialized
@@ -172,7 +213,9 @@ class ActorStateMachine(BaseStateMachine):
             after="start",
         )
         self.add_transition(
-            "start", actor_state.starting.value.tasks_started, actor_state.started
+            "start",
+            actor_state.starting.value.tasks_started,
+            actor_state.started,
         )
 
     # endregion
