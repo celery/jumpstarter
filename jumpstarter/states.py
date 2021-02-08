@@ -1,20 +1,23 @@
 from __future__ import annotations
 
 from enum import Enum, auto
+from functools import partial
 
 import transitions
 from transitions import EventData
-from transitions.core import _LOGGER, MachineError
+from transitions.core import _LOGGER, MachineError, listify
+from transitions.extensions import GraphMachine
 from transitions.extensions.asyncio import NestedAsyncTransition
 from transitions.extensions.nesting import NestedState
 
 try:
     import pygraphviz  # noqa: F401
 except ImportError:
+    from transitions_anyio import HierarchicalAnyIOMachine
     from transitions_anyio import HierarchicalAnyIOMachine as BaseStateMachine
 else:
-    from transitions_anyio import \
-        HierarchicalAnyIOGraphMachine as BaseStateMachine
+    from transitions_anyio import HierarchicalAnyIOGraphMachine as BaseStateMachine
+    from transitions_anyio import HierarchicalAnyIOMachine
 
 NestedState.separator = "↦"
 
@@ -88,7 +91,33 @@ class AsyncTransitionWithLogging(NestedAsyncTransition):
         return await super().execute(event_data)
 
 
-class ActorRestartStateMachine(BaseStateMachine):
+class ParallelGraphMachine(GraphMachine):
+    def add_model(self, model, initial=None):
+        models = listify(model)
+        super(GraphMachine, self).add_model(models, initial)
+        for mod in models:
+            mod = self if mod == "self" else mod
+            get_graph_method_name = "get_graph"
+            if hasattr(mod, get_graph_method_name):
+                if not self.name:
+                    raise AttributeError(
+                        "Model already has a get_graph attribute and state machine name was not specified. "
+                        "Graph retrieval cannot be bound."
+                    )
+                get_graph_method_name = f"get_{self.name[:-2].lower()}_graph"
+            setattr(mod, get_graph_method_name, partial(self._get_graph, mod))
+            _ = getattr(mod, get_graph_method_name)(
+                title=self.title, force_new=True
+            )  # initialises graph
+
+
+class HierarchicalParallelAnyIOGraphMachine(
+    ParallelGraphMachine, HierarchicalAnyIOMachine
+):
+    transition_cls = NestedAsyncTransition
+
+
+class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
     def __init__(
         self,
         actor_state_machine: ActorStateMachine,
@@ -155,6 +184,8 @@ class ActorStateMachine(BaseStateMachine):
         name: str | None = None,
         inherited: bool = False,
     ):
+        self._parallel_state_machines: list[BaseStateMachine] = []
+
         if inherited:
             base_actor_state_machine = actor_state
             super().__init__(
@@ -181,11 +212,15 @@ class ActorStateMachine(BaseStateMachine):
             self._create_crashed_transitions(actor_state)
             self._create_started_substates_transitions(actor_state)
 
-        self._parallel_state_machines: list[BaseStateMachine] = []
-
     # endregion
 
     # region Public API
+
+    def add_model(self, model, initial=None):
+        super(ActorStateMachine, self).add_model(model, initial=initial)
+
+        for machine in self._parallel_state_machines:
+            machine.add_model(model, initial=initial)
 
     def register_parallel_state_machine(self, machine: BaseStateMachine) -> None:
         self._parallel_state_machines.append(machine)

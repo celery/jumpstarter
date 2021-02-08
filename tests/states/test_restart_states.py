@@ -1,10 +1,16 @@
 import pytest
 from transitions import MachineError
 
-from jumpstarter.states import (ActorRestartState, ActorRestartStateMachine,
-                                ActorRunningState, ActorStartedState,
-                                ActorStartingState, ActorState,
-                                ActorStateMachine, ActorStoppingState)
+from jumpstarter.states import (
+    ActorRestartState,
+    ActorRestartStateMachine,
+    ActorRunningState,
+    ActorStartedState,
+    ActorStartingState,
+    ActorState,
+    ActorStateMachine,
+    ActorStoppingState,
+)
 from tests.mock import ANY, Mock, call
 
 pytestmark = pytest.mark.anyio
@@ -64,6 +70,7 @@ async def test_cant_restart_from_invalid_state(
 
 
 async def test_can_restart_twice(subtests, state_machine, actor_state_machine, m):
+    # TODO: Split this to subtests
     actor_state_machine.set_state(ActorRunningState.healthy)
     await state_machine.restart()
     assert state_machine._state == ActorRestartState.restarted
