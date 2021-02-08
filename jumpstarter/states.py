@@ -13,7 +13,8 @@ try:
 except ImportError:
     from transitions_anyio import HierarchicalAnyIOMachine as BaseStateMachine
 else:
-    from transitions_anyio import HierarchicalAnyIOGraphMachine as BaseStateMachine
+    from transitions_anyio import \
+        HierarchicalAnyIOGraphMachine as BaseStateMachine
 
 NestedState.separator = "↦"
 
@@ -55,14 +56,14 @@ class ActorStartedState(Enum):
 
 
 class ActorRestartingState(Enum):
-    starting = auto()
     stopping = auto()
+    starting = auto()
 
 
 class ActorRestartState(Enum):
     ignore = auto()
     restarting = ChildStateEnum(
-        children=ActorRestartingState, initial=ActorRestartingState.starting
+        children=ActorRestartingState, initial=ActorRestartingState.stopping
     )
     restarted = auto()
 
@@ -111,12 +112,12 @@ class ActorRestartStateMachine(BaseStateMachine):
         )
         self.add_transition(
             "restart",
-            restart_state.restarting.value.starting,
             restart_state.restarting.value.stopping,
+            restart_state.restarting.value.starting,
             after="restart",
         )
         self.add_transition(
-            "restart", restart_state.restarting.value.stopping, restart_state.restarted
+            "restart", restart_state.restarting.value.starting, restart_state.restarted
         )
 
         self.add_transition(

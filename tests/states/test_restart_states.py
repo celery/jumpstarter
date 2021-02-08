@@ -1,16 +1,10 @@
 import pytest
 from transitions import MachineError
 
-from jumpstarter.states import (
-    ActorRestartState,
-    ActorRestartStateMachine,
-    ActorRunningState,
-    ActorStartedState,
-    ActorStartingState,
-    ActorState,
-    ActorStateMachine,
-    ActorStoppingState,
-)
+from jumpstarter.states import (ActorRestartState, ActorRestartStateMachine,
+                                ActorRunningState, ActorStartedState,
+                                ActorStartingState, ActorState,
+                                ActorStateMachine, ActorStoppingState)
 from tests.mock import ANY, Mock, call
 
 pytestmark = pytest.mark.anyio
@@ -30,6 +24,8 @@ def actor_state_machine():
 def state_machine(m, actor_state_machine):
     state_machine = ActorRestartStateMachine(actor_state_machine)
     state_machine.on_enter_restarting(m.restarting)
+    state_machine.on_enter("restarting↦stopping", m.restarting_stopping)
+    state_machine.on_enter("restarting↦starting", m.restarting_starting)
     state_machine.on_enter_restarted(m.restarted)
 
     return state_machine
@@ -71,20 +67,48 @@ async def test_can_restart_twice(subtests, state_machine, actor_state_machine, m
     actor_state_machine.set_state(ActorRunningState.healthy)
     await state_machine.restart()
     assert state_machine._state == ActorRestartState.restarted
-    m.assert_has_calls([call.restarting(ANY), call.restarted(ANY)])
+    m.assert_has_calls(
+        [
+            call.restarting(ANY),
+            call.restarting_stopping(ANY),
+            call.restarting_starting(ANY),
+            call.restarted(ANY),
+        ]
+    )
     m.reset_mock()
 
     await state_machine.restart()
     assert state_machine._state == ActorRestartState.restarted
-    m.assert_has_calls([call.restarting(ANY), call.restarted(ANY)])
+    m.assert_has_calls(
+        [
+            call.restarting(ANY),
+            call.restarting_stopping(ANY),
+            call.restarting_starting(ANY),
+            call.restarted(ANY),
+        ]
+    )
     m.reset_mock()
 
     actor_state_machine.set_state(ActorState.crashed)
     await state_machine.restart()
     assert state_machine._state == ActorRestartState.restarted
-    m.assert_has_calls([call.restarting(ANY), call.restarted(ANY)])
+    m.assert_has_calls(
+        [
+            call.restarting(ANY),
+            call.restarting_stopping(ANY),
+            call.restarting_starting(ANY),
+            call.restarted(ANY),
+        ]
+    )
     m.reset_mock()
 
     await state_machine.restart()
     assert state_machine._state == ActorRestartState.restarted
-    m.assert_has_calls([call.restarting(ANY), call.restarted(ANY)])
+    m.assert_has_calls(
+        [
+            call.restarting(ANY),
+            call.restarting_stopping(ANY),
+            call.restarting_starting(ANY),
+            call.restarted(ANY),
+        ]
+    )

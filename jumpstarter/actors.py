@@ -9,13 +9,10 @@ from uuid import UUID, uuid4
 import anyio
 from anyio.abc import CapacityLimiter
 
-from jumpstarter.resources import (
-    NotAResourceError,
-    ResourceAlreadyExistsError,
-    ThreadedContextManager,
-    is_synchronous_resource,
-    resource,
-)
+from jumpstarter.resources import (NotAResourceError,
+                                   ResourceAlreadyExistsError,
+                                   ThreadedContextManager,
+                                   is_synchronous_resource, resource)
 from jumpstarter.states import ActorState, ActorStateMachine
 
 
