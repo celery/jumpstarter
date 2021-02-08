@@ -3,7 +3,7 @@ import pytest
 from jumpstarter.states import (
     ActorRunningState,
     ActorStateMachine,
-    HierarchicalParallelAnyIOGraphMachine,
+    HierarchicalParallelAnyIOGraphMachine, diagrams,
 )
 from tests.mock import ANY, AsyncMock, Mock, call
 
@@ -137,4 +137,6 @@ def test_add_model_adds_the_model_to_all_parallel_state_machines(state_machine):
     state_machine.add_model(model)
 
     assert state_machine.models[1] == fake_state_machine.models[1] == model
-    assert hasattr(model, "get_fake_graph")
+
+    if diagrams:
+        assert hasattr(model, "get_fake_graph")

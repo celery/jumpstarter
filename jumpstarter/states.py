@@ -15,12 +15,18 @@ try:
 except ImportError:
     from transitions_anyio import HierarchicalAnyIOMachine
     from transitions_anyio import HierarchicalAnyIOMachine as BaseStateMachine
+
+    diagrams = False
 else:
     from transitions_anyio import HierarchicalAnyIOGraphMachine as BaseStateMachine
     from transitions_anyio import HierarchicalAnyIOMachine
 
+    diagrams = True
+
 NestedState.separator = "↦"
 
+
+# region Enums
 
 class ChildStateEnum(dict):
     def __init__(self, children, initial):
@@ -32,6 +38,8 @@ class ChildStateEnum(dict):
         except AttributeError:
             return getattr(self["children"], item)
 
+
+# region States
 
 class ActorStartingState(Enum):
     dependencies_started = auto()
@@ -83,6 +91,12 @@ class ActorState(Enum):
     crashed = auto()
 
 
+# endregion
+
+# endregion
+
+# State Machine Customization
+
 class AsyncTransitionWithLogging(NestedAsyncTransition):
     async def execute(self, event_data: EventData) -> bool:
         _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name, self.before)
@@ -90,38 +104,43 @@ class AsyncTransitionWithLogging(NestedAsyncTransition):
 
         return await super().execute(event_data)
 
+if diagrams:
+    class ParallelGraphMachine(GraphMachine):
+        def add_model(self, model, initial=None):
+            models = listify(model)
+            super(GraphMachine, self).add_model(models, initial)
+            for mod in models:
+                mod = self if mod == "self" else mod
+                get_graph_method_name = "get_graph"
+                if hasattr(mod, get_graph_method_name):
+                    if not self.name:
+                        raise AttributeError(
+                            "Model already has a get_graph attribute and state machine name was not specified. "
+                            "Graph retrieval cannot be bound."
+                        )
+                    get_graph_method_name = f"get_{self.name[:-2].lower()}_graph"
+                setattr(mod, get_graph_method_name, partial(self._get_graph, mod))
+                _ = getattr(mod, get_graph_method_name)(
+                    title=self.title, force_new=True
+                )  # initialises graph
 
-class ParallelGraphMachine(GraphMachine):
-    def add_model(self, model, initial=None):
-        models = listify(model)
-        super(GraphMachine, self).add_model(models, initial)
-        for mod in models:
-            mod = self if mod == "self" else mod
-            get_graph_method_name = "get_graph"
-            if hasattr(mod, get_graph_method_name):
-                if not self.name:
-                    raise AttributeError(
-                        "Model already has a get_graph attribute and state machine name was not specified. "
-                        "Graph retrieval cannot be bound."
-                    )
-                get_graph_method_name = f"get_{self.name[:-2].lower()}_graph"
-            setattr(mod, get_graph_method_name, partial(self._get_graph, mod))
-            _ = getattr(mod, get_graph_method_name)(
-                title=self.title, force_new=True
-            )  # initialises graph
 
+    class HierarchicalParallelAnyIOGraphMachine(
+        ParallelGraphMachine, HierarchicalAnyIOMachine
+    ):
+        transition_cls = NestedAsyncTransition
+else:
+    HierarchicalParallelAnyIOGraphMachine = BaseStateMachine
 
-class HierarchicalParallelAnyIOGraphMachine(
-    ParallelGraphMachine, HierarchicalAnyIOMachine
-):
-    transition_cls = NestedAsyncTransition
+# endregion
 
+# region State Machines
 
 class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
     def __init__(
-        self,
-        actor_state_machine: ActorStateMachine,
-        restart_state: ActorRestartState = ActorRestartState,
+            self,
+            actor_state_machine: ActorStateMachine,
+            restart_state: ActorRestartState = ActorRestartState,
     ):
         super().__init__(
             states=restart_state,
@@ -159,9 +178,9 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
 
     def _check_if_running_or_crashed(self, event_data: EventData) -> bool:
         if (
-            self.actor_state_machine._state == ActorState.crashed
-            or self.actor_state_machine._state
-            == ActorState.started.value.running.value.healthy
+                self.actor_state_machine._state == ActorState.crashed
+                or self.actor_state_machine._state
+                == ActorState.started.value.running.value.healthy
         ):
             return True
         else:
@@ -179,10 +198,10 @@ class ActorStateMachine(BaseStateMachine):
     # region Dunder methods
 
     def __init__(
-        self,
-        actor_state: ActorState | ActorStateMachine = ActorState,
-        name: str | None = None,
-        inherited: bool = False,
+            self,
+            actor_state: ActorState | ActorStateMachine = ActorState,
+            name: str | None = None,
+            inherited: bool = False,
     ):
         self._parallel_state_machines: list[BaseStateMachine] = []
 
@@ -323,6 +342,7 @@ class ActorStateMachine(BaseStateMachine):
 
     # endregion
 
+# endregion
 
 async def _release_resources(event_data: transitions.EventData) -> None:
     await event_data.model._exit_stack.aclose()
