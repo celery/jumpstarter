@@ -3,7 +3,8 @@ import pytest
 from jumpstarter.states import (
     ActorRunningState,
     ActorStateMachine,
-    HierarchicalParallelAnyIOGraphMachine, diagrams,
+    HierarchicalParallelAnyIOGraphMachine,
+    diagrams,
 )
 from tests.mock import ANY, AsyncMock, Mock, call
 
