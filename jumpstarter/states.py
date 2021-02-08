@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import typing
 from enum import Enum, auto
 
 import transitions
 from transitions import EventData
-from transitions.core import _LOGGER
+from transitions.core import _LOGGER, MachineError
 from transitions.extensions.asyncio import NestedAsyncTransition
 from transitions.extensions.nesting import NestedState
 
@@ -21,7 +20,7 @@ NestedState.separator = "↦"
 
 class ChildStateEnum(dict):
     def __init__(self, children, initial):
-        super(ChildStateEnum, self).__init__(children=children, initial=initial)
+        super().__init__(children=children, initial=initial)
 
     def __getattr__(self, item):
         try:
@@ -94,7 +93,7 @@ class ActorRestartStateMachine(BaseStateMachine):
         actor_state_machine: ActorStateMachine,
         restart_state: ActorRestartState = ActorRestartState,
     ):
-        super(ActorRestartStateMachine, self).__init__(
+        super().__init__(
             states=restart_state,
             initial=restart_state.ignore,
             model_attribute="_state",
@@ -125,15 +124,23 @@ class ActorRestartStateMachine(BaseStateMachine):
             restart_state.restarted,
             restart_state.restarting,
             after="restart",
-            conditions=[self._check_if_running_or_crashed]
+            conditions=[self._check_if_running_or_crashed],
         )
 
     def _check_if_running_or_crashed(self, event_data: EventData) -> bool:
-        return (
+        if (
             self.actor_state_machine._state == ActorState.crashed
             or self.actor_state_machine._state
             == ActorState.started.value.running.value.healthy
-        )
+        ):
+            return True
+        else:
+            msg = "{}Can't trigger event {} from state {}!".format(
+                event_data.machine.name,
+                event_data.event.name,
+                self.actor_state_machine._state,
+            )
+            raise MachineError(msg)
 
 
 class ActorStateMachine(BaseStateMachine):
@@ -144,7 +151,7 @@ class ActorStateMachine(BaseStateMachine):
     def __init__(
         self,
         actor_state: ActorState | ActorStateMachine = ActorState,
-        name: typing.Optional[str] = None,
+        name: str | None = None,
         inherited: bool = False,
     ):
         if inherited:
@@ -173,7 +180,7 @@ class ActorStateMachine(BaseStateMachine):
             self._create_crashed_transitions(actor_state)
             self._create_started_substates_transitions(actor_state)
 
-        self._parallel_state_machines: typing.List[BaseStateMachine] = []
+        self._parallel_state_machines: list[BaseStateMachine] = []
 
     # endregion
 
