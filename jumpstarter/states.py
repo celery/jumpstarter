@@ -11,6 +11,8 @@ from transitions.core import _LOGGER, MachineError, listify
 from transitions.extensions import GraphMachine
 from transitions.extensions.asyncio import NestedAsyncTransition
 from transitions.extensions.nesting import NestedState
+from jumpstarter.actors import Actor
+from typing import Optional, Union, Any
 
 try:
     import pygraphviz  # noqa: F401
@@ -35,7 +37,9 @@ class ChildStateEnum(dict):
     def __init__(self, children, initial):
         super().__init__(children=children, initial=initial)
 
-    def __getattr__(self, item):
+    def __getattr__(
+        self, item: str
+    ) -> Union[ActorRunningState, ActorStartedState, ActorRestartingState]:
         try:
             return super().__getattr__(item)
         except AttributeError:
@@ -113,7 +117,7 @@ class AsyncTransitionWithLogging(NestedAsyncTransition):
 if diagrams:
 
     class ParallelGraphMachine(GraphMachine):
-        def add_model(self, model, initial=None):
+        def add_model(self, model: Union[str, Actor], initial: None = None) -> None:
             models = listify(model)
             super(GraphMachine, self).add_model(models, initial)
             for mod in models:
@@ -239,7 +243,7 @@ class ActorStateMachine(BaseStateMachine):
         actor_state: ActorState | ActorStateMachine = ActorState,
         name: str = "Actor",
         inherited: bool = False,
-    ):
+    ) -> None:
         self._parallel_state_machines: list[BaseStateMachine] = []
 
         if inherited:
@@ -276,7 +280,9 @@ class ActorStateMachine(BaseStateMachine):
 
     # region Public API
 
-    def add_model(self, model, initial=None) -> None:
+    def add_model(
+        self, model: Union[str, Actor], initial: Optional[Any] = None
+    ) -> None:
         super(ActorStateMachine, self).add_model(model, initial=initial)
 
         for machine in self._parallel_state_machines:
