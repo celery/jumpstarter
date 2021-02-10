@@ -34,3 +34,9 @@ trio = "^0.17"
 
 [tool.poetry.extras]
 diagrams = ["transitions"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    'ignore:A private pytest class or function was used.:pytest.PytestDeprecationWarning'
+]
