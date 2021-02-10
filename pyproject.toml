@@ -9,7 +9,6 @@ python = "^3.7.0"
 transitions-anyio = "^0.2.0"
 transitions = { git = "git@github.com:pytransitions/transitions.git", branch = "master", extras = ['diagrams']}
 # transitions = { version = "^0.8.6", extras = ['diagrams'] }
-isort = "^5.7.0"
 wrapt = "^1.12.1"
 
 [tool.poetry.extras]
@@ -29,6 +28,7 @@ pytest-xdist = "^2.2.0"
 autoflake = "^1.4"
 pyupgrade = "^2.7.4"
 pytest-github-actions-annotate-failures = "^0.1.1"
+isort = "^5.7.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
