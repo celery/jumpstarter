@@ -200,9 +200,7 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
         self.actor_state_machine.on_enter_stopped(notify_stopped)
 
         await self.actor_state_machine.stop()
-        # TODO: Remove the timeout once we resolve the issue with restarting from crashed state
-        async with anyio.fail_after(4):
-            await stopped_event.wait()
+        await stopped_event.wait()
 
         state: NestedAsyncState = self.actor_state_machine.get_state(ActorState.stopped)
         state.on_enter.remove(notify_stopped)

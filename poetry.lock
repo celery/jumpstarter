@@ -532,6 +532,17 @@ python-versions = ">=3.5"
 pytest = ">=4.4.0"
 
 [[package]]
+name = "pytest-timeout"
+version = "1.4.2"
+description = "py.test plugin to abort hanging tests"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+pytest = ">=3.6.0"
+
+[[package]]
 name = "pytest-xdist"
 version = "2.2.1"
 description = "pytest xdist plugin for distributed testing and loop-on-failing modes"
@@ -909,7 +920,7 @@ diagrams = ["transitions"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "36c8141d07c29fb6fb2103a8f2924d45e6cc8b70656695d524bf56e8d61a215c"
+content-hash = "274fa19e4e08f93f6559db7e462d9dd49adef77ea0b0eb6176636cf0bbacd3d8"
 
 [metadata.files]
 alabaster = [
@@ -1229,6 +1240,10 @@ pytest-randomly = [
 pytest-subtests = [
     {file = "pytest-subtests-0.3.2.tar.gz", hash = "sha256:677281a196092c06d3da8e6408f0c1362b3f7b180e3c0e9113c7209b6b48afd7"},
     {file = "pytest_subtests-0.3.2-py3-none-any.whl", hash = "sha256:ec2634b303339dc4582912fb7bd669627f2cc20b23fc277f1076b3cc69a9eb9e"},
+]
+pytest-timeout = [
+    {file = "pytest-timeout-1.4.2.tar.gz", hash = "sha256:20b3113cf6e4e80ce2d403b6fb56e9e1b871b510259206d40ff8d609f48bda76"},
+    {file = "pytest_timeout-1.4.2-py2.py3-none-any.whl", hash = "sha256:541d7aa19b9a6b4e475c759fd6073ef43d7cdc9a92d95644c260076eb257a063"},
 ]
 pytest-xdist = [
     {file = "pytest-xdist-2.2.1.tar.gz", hash = "sha256:718887296892f92683f6a51f25a3ae584993b06f7076ce1e1fd482e59a8220a2"},
