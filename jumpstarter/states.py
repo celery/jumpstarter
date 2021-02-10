@@ -243,7 +243,7 @@ class ActorStateMachine(BaseStateMachine):
     def __init__(
         self,
         actor_state: ActorState | ActorStateMachine = ActorState,
-        name: str | None = None,
+        name: str = "Actor",
         inherited: bool = False,
     ):
         self._parallel_state_machines: list[BaseStateMachine] = []
