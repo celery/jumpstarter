@@ -9,7 +9,7 @@ from anyio.abc import Event
 from transitions import EventData
 from transitions.core import _LOGGER, MachineError, listify
 from transitions.extensions import GraphMachine
-from transitions.extensions.asyncio import NestedAsyncState, NestedAsyncTransition
+from transitions.extensions.asyncio import NestedAsyncTransition
 from transitions.extensions.nesting import NestedState
 
 try:
@@ -192,32 +192,16 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
         self.on_enter("restarting↦starting", self._start_and_wait_for_completion)
 
     async def _stop_and_wait_for_completion(self, _: EventData) -> None:
-        stopped_event: Event = anyio.create_event()
+        shutdown_event: Event = anyio.create_event()
 
-        async def notify_stopped(_: EventData) -> None:
-            await stopped_event.set()
-
-        self.actor_state_machine.on_enter_stopped(notify_stopped)
-
-        await self.actor_state_machine.stop()
-        await stopped_event.wait()
-
-        state: NestedAsyncState = self.actor_state_machine.get_state(ActorState.stopped)
-        state.on_enter.remove(notify_stopped)
+        await self.actor_state_machine.stop(shutdown_event=shutdown_event)
+        await shutdown_event.wait()
 
     async def _start_and_wait_for_completion(self, _: EventData) -> None:
-        started_event: Event = anyio.create_event()
+        bootup_event: Event = anyio.create_event()
 
-        async def notify_started(_: EventData) -> None:
-            await started_event.set()
-
-        self.actor_state_machine.on_enter_started(notify_started)
-
-        await self.actor_state_machine.start()
-        await started_event.wait()
-
-        state: NestedAsyncState = self.actor_state_machine.get_state(ActorState.started)
-        state.on_enter.remove(notify_started)
+        await self.actor_state_machine.start(bootup_event=bootup_event)
+        await bootup_event.wait()
 
     def _check_if_running_or_crashed(self, event_data: EventData) -> bool:
         if (
@@ -357,6 +341,7 @@ class ActorStateMachine(BaseStateMachine):
             "stop",
             actor_state.stopping.value.dependencies_stopped,
             actor_state.stopped,
+            after=partial(_maybe_set_event, event_name="shutdown_event"),
         )
 
         transition = self.get_transitions(
@@ -388,7 +373,7 @@ class ActorStateMachine(BaseStateMachine):
             "start",
             actor_state.starting.value.tasks_started,
             actor_state.started,
-            # after=self._started_event.set,
+            after=partial(_maybe_set_event, event_name="bootup_event"),
         )
 
     # endregion
@@ -399,3 +384,24 @@ class ActorStateMachine(BaseStateMachine):
 
 async def _release_resources(event_data: transitions.EventData) -> None:
     await event_data.model._exit_stack.aclose()
+
+
+async def _maybe_set_event(event_data: EventData, event_name: str) -> None:
+    kwargs = _merge_event_data_kwargs(event_data)
+    try:
+        event: Event = kwargs[event_name]
+        await event.set()
+    except KeyError:
+        pass
+
+
+def _merge_event_data_kwargs(event_data: EventData) -> dict:
+    kwargs = event_data.kwargs
+    while True:
+        args = event_data.args
+        if args:
+            event_data = args[0]
+            kwargs.update(event_data.kwargs)
+        else:
+            break
+    return kwargs

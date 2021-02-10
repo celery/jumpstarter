@@ -194,7 +194,9 @@ class Actor:
 
     @classmethod
     def draw_state_machine_graph(cls, path: str) -> None:
-        graph = cls._state_machine.get_graph(title=cls._state_machine.name[:-2].replace('_', ' ').capitalize())
+        graph = cls._state_machine.get_graph(
+            title=cls._state_machine.name[:-2].replace("_", " ").capitalize()
+        )
         graph.node_attr["style"] = "filled"
 
         parallel_state_machines = cls._state_machine._parallel_state_machines
