@@ -194,14 +194,20 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
     async def _stop_and_wait_for_completion(self, _: EventData) -> None:
         shutdown_event: Event = anyio.create_event()
 
-        await self.actor_state_machine.stop(shutdown_event=shutdown_event)
-        await shutdown_event.wait()
+        async with anyio.create_task_group() as task_group:
+            await task_group.spawn(
+                partial(self.actor_state_machine.stop, shutdown_event=shutdown_event)
+            )
+            await shutdown_event.wait()
 
     async def _start_and_wait_for_completion(self, _: EventData) -> None:
         bootup_event: Event = anyio.create_event()
 
-        await self.actor_state_machine.start(bootup_event=bootup_event)
-        await bootup_event.wait()
+        async with anyio.create_task_group() as task_group:
+            await task_group.spawn(
+                partial(self.actor_state_machine.start, bootup_event=bootup_event)
+            )
+            await bootup_event.wait()
 
     def _check_if_running_or_crashed(self, event_data: EventData) -> bool:
         if (
@@ -281,8 +287,12 @@ class ActorStateMachine(BaseStateMachine):
 
     def _create_crashed_transitions(self, actor_state):
         self.add_transition("report_error", "*", actor_state.crashed)
-        self.add_transition("stop", actor_state.crashed, actor_state.stopping)
-        self.add_transition("start", actor_state.crashed, actor_state.starting)
+        self.add_transition(
+            "stop", actor_state.crashed, actor_state.stopping, after="stop"
+        )
+        self.add_transition(
+            "start", actor_state.crashed, actor_state.starting, after="start"
+        )
 
     def _create_started_substates_transitions(self, actor_state):
         self.add_transition(
@@ -400,7 +410,10 @@ def _merge_event_data_kwargs(event_data: EventData) -> dict:
     while True:
         args = event_data.args
         if args:
-            event_data = args[0]
+            try:
+                event_data = next(arg for arg in args if isinstance(arg, EventData))
+            except StopIteration:
+                break
             kwargs.update(event_data.kwargs)
         else:
             break
