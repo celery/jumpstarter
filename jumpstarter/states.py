@@ -147,6 +147,14 @@ else:
 
 
 class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
+    restart_allowed_from = (
+        ActorState.crashed,
+        ActorState.started.value.running.value.healthy,
+        ActorState.started.value.running.value.degraded,
+        ActorState.started.value.running.value.unhealthy,
+        ActorState.started.value.paused,
+    )
+
     def __init__(
         self,
         actor_state_machine: ActorStateMachine,
@@ -168,7 +176,7 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             restart_state.ignore,
             restart_state.restarting,
             after="restart",
-            conditions=[self._check_if_running_or_crashed],
+            conditions=self._can_restart,
         )
         self.add_transition(
             "restart",
@@ -185,7 +193,7 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             restart_state.restarted,
             restart_state.restarting,
             after="restart",
-            conditions=[self._check_if_running_or_crashed],
+            conditions=self._can_restart,
         )
 
         self.on_enter("restarting↦stopping", self._stop_and_wait_for_completion)
@@ -198,7 +206,7 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             await task_group.spawn(
                 partial(self.actor_state_machine.stop, shutdown_event=shutdown_event)
             )
-            await shutdown_event.wait()
+            await task_group.spawn(shutdown_event.wait)
 
     async def _start_and_wait_for_completion(self, _: EventData) -> None:
         bootup_event: Event = anyio.create_event()
@@ -207,14 +215,10 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             await task_group.spawn(
                 partial(self.actor_state_machine.start, bootup_event=bootup_event)
             )
-            await bootup_event.wait()
+            await task_group.spawn(bootup_event.wait)
 
-    def _check_if_running_or_crashed(self, event_data: EventData) -> bool:
-        if (
-            self.actor_state_machine._state == ActorState.crashed
-            or self.actor_state_machine._state
-            == ActorState.started.value.running.value.healthy
-        ):
+    def _can_restart(self, event_data: EventData) -> bool:
+        if self.actor_state_machine._state in self.restart_allowed_from:
             return True
         else:
             msg = "{}Can't trigger event {} from state {}!".format(

@@ -50,8 +50,9 @@ invalid_states_for_restart = set(
     + [state for state in ActorRunningState]
     + [state for state in ActorStartedState]
 )
-invalid_states_for_restart.remove(ActorRunningState.healthy)
-invalid_states_for_restart.remove(ActorState.crashed)
+invalid_states_for_restart = invalid_states_for_restart - set(
+    ActorRestartStateMachine.restart_allowed_from
+)
 # This list needs to be sorted for xdist to work.
 invalid_states_for_restart = list(
     sorted(invalid_states_for_restart, key=lambda e: e.name)
@@ -71,7 +72,7 @@ async def test_cant_restart_from_invalid_state(
         await state_machine.restart()
 
 
-@pytest.mark.parametrize("state", [ActorRunningState.healthy, ActorState.crashed])
+@pytest.mark.parametrize("state", ActorRestartStateMachine.restart_allowed_from)
 @pytest.mark.timeout(4)
 async def test_can_restart_twice(
     state, subtests, state_machine, actor_state_machine, m
