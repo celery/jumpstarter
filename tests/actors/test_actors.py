@@ -1,9 +1,15 @@
+import logging
 from uuid import UUID
 
 import pytest
 
 from jumpstarter import Actor
-from jumpstarter.states import ActorRunningState, ActorStartedState, ActorState
+from jumpstarter.states import (
+    ActorRestartState,
+    ActorRunningState,
+    ActorStartedState,
+    ActorState,
+)
 
 pytestmark = pytest.mark.anyio
 
@@ -62,3 +68,21 @@ async def test_actor_can_pause_and_resume_after_start():
 
     await fake_actor.resume()
     assert fake_actor.state == ActorRunningState.healthy
+
+
+async def test_actor_can_restart_after_starting():
+    class FakeActor(Actor):
+        ...
+
+    fake_actor = FakeActor()
+
+    await fake_actor.start()
+    assert fake_actor.state == ActorRunningState.healthy
+
+    logging.info("Actor started")
+
+    await fake_actor.restart()
+    assert fake_actor.state == {
+        "test_actor_can_restart_after_starting.<locals>.FakeActor": ActorRunningState.healthy,
+        "Restart": ActorRestartState.restarted,
+    }

@@ -142,7 +142,7 @@ class Actor:
         for machine in self._state_machine._parallel_state_machines:
             if machine.get_model_state(self).name == "ignore":
                 continue
-            parallel_states[machine.name[:-2]] = machine.get_model_state(self)
+            parallel_states[machine.name[:-2]] = getattr(self, machine.model_attribute)
 
         if parallel_states:
             parallel_states[self._state_machine.name[:-2]] = self._state

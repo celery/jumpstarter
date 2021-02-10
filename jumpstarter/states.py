@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from functools import partial
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import anyio
 import transitions
@@ -11,8 +12,11 @@ from transitions.core import _LOGGER, MachineError, listify
 from transitions.extensions import GraphMachine
 from transitions.extensions.asyncio import NestedAsyncTransition
 from transitions.extensions.nesting import NestedState
-from jumpstarter.actors import Actor
-from typing import Optional, Union, Any
+
+if TYPE_CHECKING:
+    from jumpstarter.actors import Actor
+else:
+    Actor = None
 
 try:
     import pygraphviz  # noqa: F401
@@ -161,7 +165,6 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
 
     def __init__(
         self,
-        actor_state_machine: ActorStateMachine,
         restart_state: ActorRestartState = ActorRestartState,
     ):
         super().__init__(
@@ -174,7 +177,6 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             name="Restart",
         )
 
-        self.actor_state_machine: ActorStateMachine = actor_state_machine
         self.add_transition(
             "restart",
             restart_state.ignore,
@@ -203,32 +205,32 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
         self.on_enter("restarting↦stopping", self._stop_and_wait_for_completion)
         self.on_enter("restarting↦starting", self._start_and_wait_for_completion)
 
-    async def _stop_and_wait_for_completion(self, _: EventData) -> None:
+    async def _stop_and_wait_for_completion(self, event_data: EventData) -> None:
         shutdown_event: Event = anyio.create_event()
 
         async with anyio.create_task_group() as task_group:
             await task_group.spawn(
-                partial(self.actor_state_machine.stop, shutdown_event=shutdown_event)
+                partial(event_data.model.stop, shutdown_event=shutdown_event)
             )
             await task_group.spawn(shutdown_event.wait)
 
-    async def _start_and_wait_for_completion(self, _: EventData) -> None:
+    async def _start_and_wait_for_completion(self, event_data: EventData) -> None:
         bootup_event: Event = anyio.create_event()
 
         async with anyio.create_task_group() as task_group:
             await task_group.spawn(
-                partial(self.actor_state_machine.start, bootup_event=bootup_event)
+                partial(event_data.model.start, bootup_event=bootup_event)
             )
             await task_group.spawn(bootup_event.wait)
 
     def _can_restart(self, event_data: EventData) -> bool:
-        if self.actor_state_machine._state in self.restart_allowed_from:
+        if event_data.model._state in self.restart_allowed_from:
             return True
         else:
             msg = "{}Can't trigger event {} from state {}!".format(
                 event_data.machine.name,
                 event_data.event.name,
-                self.actor_state_machine._state,
+                event_data.model._state,
             )
             raise MachineError(msg)
 
@@ -274,7 +276,7 @@ class ActorStateMachine(BaseStateMachine):
             self._create_crashed_transitions(actor_state)
             self._create_started_substates_transitions(actor_state)
 
-        self._parallel_state_machines.append(ActorRestartStateMachine(self))
+        self._parallel_state_machines.append(ActorRestartStateMachine())
 
     # endregion
 

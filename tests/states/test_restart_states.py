@@ -30,7 +30,7 @@ async def actor_state_machine():
 
 @pytest.fixture
 def state_machine(m, actor_state_machine):
-    state_machine = ActorRestartStateMachine(actor_state_machine)
+    state_machine = ActorRestartStateMachine()
     state_machine.on_enter_restarting(m.restarting)
     state_machine.on_enter("restarting↦stopping", m.restarting_stopping)
     state_machine.on_enter("restarting↦starting", m.restarting_starting)
