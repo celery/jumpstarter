@@ -52,3 +52,6 @@ def format(session: Session) -> None:
 
     session.log("Reformatting code")
     session.run("black", "jumpstarter/", "tests/")
+
+    session.log("Sorting pyproject.toml")
+    session.run("toml-sort", "-i", "--all", "pyproject.toml")
