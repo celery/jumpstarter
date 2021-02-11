@@ -8,7 +8,7 @@ from jumpstarter.states import (
     ActorRestartState,
     ActorRunningState,
     ActorStartedState,
-    ActorState,
+    ActorState, ActorRestartStateMachine,
 )
 
 pytestmark = pytest.mark.anyio
@@ -70,19 +70,19 @@ async def test_actor_can_pause_and_resume_after_start():
     assert fake_actor.state == ActorRunningState.healthy
 
 
-async def test_actor_can_restart_after_starting():
+@pytest.mark.parametrize("state", ActorRestartStateMachine.restart_allowed_from)
+async def test_actor_can_restart(state):
     class FakeActor(Actor):
         ...
 
     fake_actor = FakeActor()
 
-    await fake_actor.start()
-    assert fake_actor.state == ActorRunningState.healthy
+    fake_actor._state_machine.set_state(state)
 
     logging.info("Actor started")
 
     await fake_actor.restart()
     assert fake_actor.state == {
-        "test_actor_can_restart_after_starting.<locals>.FakeActor": ActorRunningState.healthy,
+        "test_actor_can_restart.<locals>.FakeActor": ActorRunningState.healthy,
         "Restart": ActorRestartState.restarted,
     }

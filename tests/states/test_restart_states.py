@@ -17,24 +17,31 @@ pytestmark = pytest.mark.anyio
 
 
 @pytest.fixture
-def m():
-    return Mock()
+def model():
+    class Model:
+        def __init__(self):
+            self.m = Mock()
+            del self.m.get_graph
+
+            self._exit_stack = AsyncMock()
+
+    return Model()
 
 
 @pytest.fixture
 async def actor_state_machine():
-    state_machine = ActorStateMachine()
-    state_machine._exit_stack = AsyncMock()
-    return state_machine
+    return ActorStateMachine()
 
 
 @pytest.fixture
-def state_machine(m, actor_state_machine):
-    state_machine = ActorRestartStateMachine()
-    state_machine.on_enter_restarting(m.restarting)
-    state_machine.on_enter("restarting↦stopping", m.restarting_stopping)
-    state_machine.on_enter("restarting↦starting", m.restarting_starting)
-    state_machine.on_enter_restarted(m.restarted)
+def state_machine(model, actor_state_machine):
+    state_machine = actor_state_machine._parallel_state_machines[0]
+    actor_state_machine.add_model(model)
+
+    state_machine.on_enter_restarting(model.m.restarting)
+    state_machine.on_enter("restarting↦stopping", model.m.restarting_stopping)
+    state_machine.on_enter("restarting↦starting", model.m.restarting_starting)
+    state_machine.on_enter_restarted(model.m.restarted)
 
     return state_machine
 
@@ -61,27 +68,27 @@ invalid_states_for_restart = list(
 
 @pytest.mark.parametrize("state", invalid_states_for_restart)
 async def test_cant_restart_from_invalid_state(
-    state, state_machine, actor_state_machine
+    state, model, state_machine, actor_state_machine
 ):
     actor_state_machine.set_state(state)
     msg = "{}Can't trigger event restart from state {}!".format(
         state_machine.name,
-        actor_state_machine._state,
+        model._state,
     )
     with pytest.raises(MachineError, match=msg):
-        await state_machine.restart()
+        await model.restart()
 
 
 @pytest.mark.parametrize("state", ActorRestartStateMachine.restart_allowed_from)
 @pytest.mark.timeout(4)
 async def test_can_restart_twice(
-    state, subtests, state_machine, actor_state_machine, m
+    state, subtests, state_machine, actor_state_machine, model
 ):
     with subtests.test(f"can restart from {state} state"):
         actor_state_machine.set_state(state)
-        await state_machine.restart()
-        assert state_machine._restart_state == ActorRestartState.restarted
-        m.assert_has_calls(
+        await model.restart()
+        assert model._restart_state == ActorRestartState.restarted
+        model.m.assert_has_calls(
             [
                 call.restarting(ANY),
                 call.restarting_stopping(ANY),
@@ -89,12 +96,12 @@ async def test_can_restart_twice(
                 call.restarted(ANY),
             ]
         )
-    m.reset_mock()
+    model.m.reset_mock()
 
     with subtests.test(f"can restart again after restarting once from {state} state"):
-        await state_machine.restart()
-        assert state_machine._restart_state == ActorRestartState.restarted
-        m.assert_has_calls(
+        await model.restart()
+        assert model._restart_state == ActorRestartState.restarted
+        model.m.assert_has_calls(
             [
                 call.restarting(ANY),
                 call.restarting_stopping(ANY),
@@ -102,4 +109,4 @@ async def test_can_restart_twice(
                 call.restarted(ANY),
             ]
         )
-    m.reset_mock()
+    model.m.reset_mock()
