@@ -29,8 +29,10 @@ pytest-subtests = "^0.3"
 pytest-xdist = "^2.2.0"
 pyupgrade = "^2.7.4"
 sphinx-celery = "^2.0.0"
+sphinx-pyreverse = "^0.0.13"
 toml-sort = "^0.18.0"
 trio = "^0.17"
+pylint = "^2.6.0"
 
 [tool.poetry.extras]
 diagrams = ["transitions"]

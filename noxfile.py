@@ -9,6 +9,7 @@ from nox.sessions import Session
 def build_docs(session: Session):
     session.install(".")
     session.run("poetry", "install", external=True)
+    session.run("sphinx-autodoc", "-e", "-T", "jumpstarter/", "-o", "docs/reference")
     session.run("sphinx-build", "-b", "html", "-j", "auto", "docs/", "docs/_build/_html")
 
 

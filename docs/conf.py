@@ -13,4 +13,5 @@ globals().update(conf.build_config(
     copyright='2021',
     publisher='Celery Project',
     html_prepend_sidebars=['sidebardonations.html'],
+    extra_extensions=['sphinx_pyreverse', 'sphinx.ext.autodoc']
 ))
