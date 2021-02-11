@@ -2,7 +2,7 @@ from uuid import UUID
 
 import pytest
 
-from jumpstarter.actors import Actor
+from jumpstarter import Actor
 from jumpstarter.states import ActorRunningState, ActorStartedState, ActorState
 
 pytestmark = pytest.mark.anyio

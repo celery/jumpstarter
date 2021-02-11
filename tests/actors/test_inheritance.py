@@ -1,7 +1,7 @@
 import pytest
 
-from jumpstarter.actors import Actor, ActorStateMachineFactory
-from jumpstarter.resources import resource
+from jumpstarter import Actor, resource
+from jumpstarter.actors import ActorStateMachineFactory
 from jumpstarter.states import ActorStartingState
 
 pytestmark = pytest.mark.anyio
