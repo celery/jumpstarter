@@ -111,7 +111,9 @@ class Actor:
 
     # region Dunder methods
 
-    def __init__(self, *, actor_id: typing.Optional[typing.Union[str, UUID]] = None):
+    def __init__(
+        self, *, actor_id: typing.Optional[typing.Union[str, UUID]] = None
+    ) -> None:
         cls: typing.Type = type(self)
         cls._state_machine.add_model(self)
 
