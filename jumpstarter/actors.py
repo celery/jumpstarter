@@ -138,10 +138,11 @@ class Actor:
 
     @property
     def state(self) -> typing.Union[typing.Dict[str, typing.Any], typing.Any]:
-        parallel_states = {
-            machine.name[:-2]: machine.get_model_state(self)
-            for machine in self._state_machine._parallel_state_machines
-        }
+        parallel_states: typing.Dict[str, typing.Any] = {}
+        for machine in self._state_machine._parallel_state_machines:
+            if machine.get_model_state(self).name == "ignore":
+                continue
+            parallel_states[machine.name[:-2]] = getattr(self, machine.model_attribute)
 
         if parallel_states:
             parallel_states[self._state_machine.name[:-2]] = self._state
@@ -193,8 +194,21 @@ class Actor:
 
     @classmethod
     def draw_state_machine_graph(cls, path: str) -> None:
-        graph = cls._state_machine.get_graph()
+        graph = cls._state_machine.get_graph(
+            title=cls._state_machine.name[:-2].replace("_", " ").capitalize()
+        )
         graph.node_attr["style"] = "filled"
+
+        parallel_state_machines = cls._state_machine._parallel_state_machines
+        cls.__create_subgraphs(
+            graph,
+            [
+                machine.get_graph(
+                    title=f"{machine.name[:-2].replace('_', ' ').capitalize()}"
+                )
+                for machine in parallel_state_machines
+            ],
+        )
 
         # Node colors
         for node in graph.iternodes():
@@ -234,6 +248,38 @@ class Actor:
             elif destination.startswith("stopping"):
                 edge.attr["color"] = "#ee9595"
 
-        graph.draw(path, prog="circo")
+        graph.draw(path, prog="dot")
+
+    @classmethod
+    def __create_subgraphs(cls, graph, subgraphs):
+        for i, machine_graph in enumerate(subgraphs):
+            # This is either an existing cluster or a new one.
+            # If it is a new cluster we need to generate a name for it.
+            name = (
+                machine_graph.name
+                if machine_graph.name and machine_graph.name.startswith("cluster")
+                else f"cluster_{i}"
+            )
+
+            new_subgraph = graph.add_subgraph(
+                machine_graph.nodes(), name=name, **machine_graph.graph_attr
+            )
+            new_subgraph.add_edges_from(machine_graph.edges())
+
+            # Copy nodes' and edges' attributes
+
+            for node in machine_graph.iternodes():
+                # TODO: Add colors
+                new_node = new_subgraph.get_node(node)
+                new_node.attr.update(node.attr)
+
+                for edge in machine_graph.edges_iter(node):
+                    new_edge = new_subgraph.get_edge(edge[0], edge[1])
+                    new_edge.attr.update(edge.attr)
+
+            # Recursively attach all subgraphs
+
+            for subgraph in subgraphs:
+                cls.__create_subgraphs(new_subgraph, subgraph.subgraphs())
 
     # endregion

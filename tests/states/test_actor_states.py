@@ -1,6 +1,11 @@
 import pytest
 
-from jumpstarter.states import ActorRunningState, ActorStateMachine
+from jumpstarter.states import (
+    ActorRunningState,
+    ActorStateMachine,
+    HierarchicalParallelAnyIOGraphMachine,
+    diagrams,
+)
 from tests.mock import ANY, AsyncMock, Mock, call
 
 pytestmark = pytest.mark.anyio
@@ -120,3 +125,19 @@ async def test_stop_paused(subtests, state_machine, m):
         m.resources_acquired_mock.assert_not_called()
         m.tasks_started_mock.assert_not_called()
         m.started_mock.assert_not_called()
+
+
+def test_add_model_adds_the_model_to_all_parallel_state_machines(state_machine):
+    fake_state_machine = HierarchicalParallelAnyIOGraphMachine(name="Fake")
+    state_machine.register_parallel_state_machine(fake_state_machine)
+
+    class Model:
+        ...
+
+    model = Model()
+    state_machine.add_model(model)
+
+    assert state_machine.models[1] == fake_state_machine.models[1] == model
+
+    if diagrams:
+        assert hasattr(model, "get_fake_graph")
