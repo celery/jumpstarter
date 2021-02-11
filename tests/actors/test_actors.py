@@ -6,9 +6,10 @@ import pytest
 from jumpstarter import Actor
 from jumpstarter.states import (
     ActorRestartState,
+    ActorRestartStateMachine,
     ActorRunningState,
     ActorStartedState,
-    ActorState, ActorRestartStateMachine,
+    ActorState,
 )
 
 pytestmark = pytest.mark.anyio
