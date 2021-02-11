@@ -13,5 +13,8 @@ globals().update(conf.build_config(
     copyright='2021',
     publisher='Celery Project',
     html_prepend_sidebars=['sidebardonations.html'],
-    extra_extensions=['sphinx_pyreverse', 'sphinx.ext.autodoc']
+    set_type_checking_flag=True,
+    always_document_param_types=True,
+    typehints_fully_qualified=True,
+    extra_extensions=['sphinx_pyreverse', 'sphinx.ext.autodoc', 'sphinx_autodoc_typehints']
 ))

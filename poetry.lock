@@ -659,6 +659,21 @@ lint = ["flake8 (>=3.5.0)", "isort", "mypy (>=0.790)", "docutils-stubs"]
 test = ["pytest", "pytest-cov", "html5lib", "cython", "typed-ast"]
 
 [[package]]
+name = "sphinx-autodoc-typehints"
+version = "1.11.1"
+description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
+category = "dev"
+optional = false
+python-versions = ">=3.5.2"
+
+[package.dependencies]
+Sphinx = ">=3.0"
+
+[package.extras]
+test = ["pytest (>=3.1.0)", "typing-extensions (>=3.5)", "sphobjinv (>=2.0)", "Sphinx (>=3.2.0)", "dataclasses"]
+type_comments = ["typed-ast (>=1.4.0)"]
+
+[[package]]
 name = "sphinx-celery"
 version = "2.0.0"
 description = "Sphinx Celery Theme."
@@ -894,7 +909,7 @@ diagrams = ["transitions"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "6f64bf5295214506d883fb40a73e27c0e465521ad158793b922739cdad725d0a"
+content-hash = "26c45b7961c78c332faae0f5f474a9431fdccfe3d48d8df6a59a4f1a17f9bf62"
 
 [metadata.files]
 alabaster = [
@@ -1316,6 +1331,10 @@ sortedcontainers = [
 sphinx = [
     {file = "Sphinx-3.4.3-py3-none-any.whl", hash = "sha256:c314c857e7cd47c856d2c5adff514ac2e6495f8b8e0f886a8a37e9305dfea0d8"},
     {file = "Sphinx-3.4.3.tar.gz", hash = "sha256:41cad293f954f7d37f803d97eb184158cfd90f51195131e94875bc07cd08b93c"},
+]
+sphinx-autodoc-typehints = [
+    {file = "sphinx-autodoc-typehints-1.11.1.tar.gz", hash = "sha256:244ba6d3e2fdb854622f643c7763d6f95b6886eba24bec28e86edf205e4ddb20"},
+    {file = "sphinx_autodoc_typehints-1.11.1-py3-none-any.whl", hash = "sha256:da049791d719f4c9813642496ee4764203e317f0697eb75446183fa2a68e3f77"},
 ]
 sphinx-celery = [
     {file = "sphinx_celery-2.0.0-py2.py3-none-any.whl", hash = "sha256:9326c150600e2c8299f356283e6397f15493370368c4b68697edd98beac9f868"},
