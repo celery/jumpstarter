@@ -410,7 +410,7 @@ name = "pygraphviz"
 version = "1.7"
 description = "Python interface to Graphviz"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7"
 
 [[package]]
@@ -909,7 +909,7 @@ diagrams = ["transitions"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "26c45b7961c78c332faae0f5f474a9431fdccfe3d48d8df6a59a4f1a17f9bf62"
+content-hash = "36c8141d07c29fb6fb2103a8f2924d45e6cc8b70656695d524bf56e8d61a215c"
 
 [metadata.files]
 alabaster = [

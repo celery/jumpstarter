@@ -10,8 +10,8 @@ version = "0.1.0"
 
 [tool.poetry.dependencies]
 python = "^3.7.0"
-transitions = { git = "git@github.com:pytransitions/transitions.git", branch = "master", extras = ['diagrams']}
-# transitions = { version = "^0.8.7", extras = ['diagrams'] }
+transitions = { git = "git@github.com:pytransitions/transitions.git", branch = "master", extras = ['diagrams'], optional = true }
+# transitions = { version = "^0.8.7", extras = ['diagrams'], optional = true }
 transitions-anyio = "^0.2.0"
 wrapt = "^1.12.1"
 
