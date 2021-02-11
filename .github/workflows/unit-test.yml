@@ -15,7 +15,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install graphviz dependencies
       run: sudo apt-get install libgraphviz-dev graphviz
-      if: ${{matrix.extras}} == "(diagrams)"
+      if: matrix.extras == '(diagrams)'
     - name: Cache pip
       uses: actions/cache@v2
       with:
