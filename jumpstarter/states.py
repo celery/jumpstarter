@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from functools import partial
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import anyio
 import transitions
@@ -43,7 +43,7 @@ class ChildStateEnum(dict):
 
     def __getattr__(
         self, item: str
-    ) -> Union[ActorRunningState, ActorStartedState, ActorRestartingState]:
+    ) -> ActorRunningState | ActorStartedState | ActorRestartingState:
         try:
             return super().__getattr__(item)
         except AttributeError:
@@ -121,7 +121,7 @@ class AsyncTransitionWithLogging(NestedAsyncTransition):
 if diagrams:
 
     class ParallelGraphMachine(GraphMachine):
-        def add_model(self, model: Union[str, Actor], initial: None = None) -> None:
+        def add_model(self, model: str | Actor, initial: None = None) -> None:
             models = listify(model)
             super(GraphMachine, self).add_model(models, initial)
             for mod in models:
@@ -282,10 +282,8 @@ class ActorStateMachine(BaseStateMachine):
 
     # region Public API
 
-    def add_model(
-        self, model: Union[str, Actor], initial: Optional[Any] = None
-    ) -> None:
-        super(ActorStateMachine, self).add_model(model, initial=initial)
+    def add_model(self, model: str | Actor, initial: Any | None = None) -> None:
+        super().add_model(model, initial=initial)
 
         for machine in self._parallel_state_machines:
             machine.add_model(model, initial=initial)
