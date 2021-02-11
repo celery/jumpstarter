@@ -816,12 +816,11 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "transitions"
-version = "0.8.7"
+version = "0.8.6"
 description = "A lightweight, object-oriented Python state machine implementation with many extensions."
 category = "main"
 optional = false
 python-versions = "*"
-develop = false
 
 [package.dependencies]
 pygraphviz = {version = "*", optional = true, markers = "extra == \"diagrams\""}
@@ -830,12 +829,6 @@ six = "*"
 [package.extras]
 diagrams = ["pygraphviz"]
 test = ["pytest"]
-
-[package.source]
-type = "git"
-url = "git@github.com:pytransitions/transitions.git"
-reference = "master"
-resolved_reference = "b6a1d15bd19738b7790136a66ee71611ccff82a1"
 
 [[package]]
 name = "transitions-anyio"
@@ -920,7 +913,7 @@ diagrams = ["transitions"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "274fa19e4e08f93f6559db7e462d9dd49adef77ea0b0eb6176636cf0bbacd3d8"
+content-hash = "a3fb3e43355522e8f1784ba3b690b73c9695043f5e5e531d0037f80b1a98b396"
 
 [metadata.files]
 alabaster = [
@@ -1400,7 +1393,10 @@ tomlkit = [
     {file = "tomlkit-0.7.0-py2.py3-none-any.whl", hash = "sha256:6babbd33b17d5c9691896b0e68159215a9387ebfa938aa3ac42f4a4beeb2b831"},
     {file = "tomlkit-0.7.0.tar.gz", hash = "sha256:ac57f29693fab3e309ea789252fcce3061e19110085aa31af5446ca749325618"},
 ]
-transitions = []
+transitions = [
+    {file = "transitions-0.8.6-py2.py3-none-any.whl", hash = "sha256:188f83a5b194c8b7b65e04a54bdde3e1bac8bfe223190d54b2084d166028ba1b"},
+    {file = "transitions-0.8.6.tar.gz", hash = "sha256:032e10113139852ffb3ecfa4c2a5138f87441d85c3d6ad9122bb4b0978180a8d"},
+]
 transitions-anyio = [
     {file = "transitions-anyio-0.2.0.tar.gz", hash = "sha256:376cf4f1640bf08376db542a9c4aaf5760adf177d5008db0fd6078b370fe11f4"},
     {file = "transitions_anyio-0.2.0-py3-none-any.whl", hash = "sha256:98fc7065a3ca2e31c7a301128f0e0d81dab08029f4380da6b8eb6c14920b4ea0"},
