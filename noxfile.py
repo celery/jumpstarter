@@ -1,11 +1,9 @@
 import glob
 
-import nox
-import nox_poetry.patch  # noqa: F401
-from nox.sessions import Session
+from nox_poetry import session, Session
 
 
-@nox.session
+@session
 def build_docs(session: Session):
     session.install(".")
     session.run("poetry", "install", external=True)
@@ -13,7 +11,7 @@ def build_docs(session: Session):
     session.run("sphinx-build", "-b", "html", "-j", "auto", "docs/", "docs/_build/_html")
 
 
-@nox.session(python=("3.7", "3.8", "3.9"))
+@session(python=("3.7", "3.8", "3.9"))
 def test(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
@@ -21,7 +19,7 @@ def test(session: Session) -> None:
     session.run("pytest", "-nauto", "--cov=jumpstarter", "--cov-branch", "--cov-report=xml")
 
 
-@nox.session
+@session
 def retype(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
@@ -34,7 +32,7 @@ def retype(session: Session) -> None:
         session.run("monkeytype", "apply", result)
 
 
-@nox.session
+@session
 def format(session: Session) -> None:
     session.install(".")
     session.run("poetry", "install", external=True)
