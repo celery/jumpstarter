@@ -255,7 +255,6 @@ class ActorStateMachine(BaseStateMachine):
                 auto_transitions=False,
                 send_event=True,
                 name=name,
-                # queued=True,
                 model_attribute="_state",
                 finalize_event=_crash_if_an_error_occurred,
             )
@@ -266,8 +265,8 @@ class ActorStateMachine(BaseStateMachine):
                 auto_transitions=False,
                 send_event=True,
                 name=name,
-                queued=True,
                 model_attribute="_state",
+                finalize_event=_crash_if_an_error_occurred,
             )
 
             self._create_bootup_transitions(actor_state)
