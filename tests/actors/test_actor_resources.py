@@ -41,8 +41,7 @@ async def test_acquire_resource(subtests, resource_type):
     await fake_actor.stop()
 
     with subtests.test("__aexit__ is called"):
-        resource_mock.__aexit__.assert_called_once_with(
-            resource_mock, None, None, None)
+        resource_mock.__aexit__.assert_called_once_with(resource_mock, None, None, None)
 
 
 @pytest.mark.parametrize(
@@ -77,8 +76,7 @@ async def test_acquire_resource_within_specified_timeout(subtests, resource_type
     await fake_actor.stop()
 
     with subtests.test("__aexit__ is called"):
-        resource_mock.__aexit__.assert_called_once_with(
-            resource_mock, None, None, None)
+        resource_mock.__aexit__.assert_called_once_with(resource_mock, None, None, None)
 
 
 async def test_acquire_async_resource_timed_out(subtests):

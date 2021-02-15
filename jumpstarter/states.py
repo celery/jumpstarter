@@ -112,10 +112,8 @@ class ActorState(Enum):
 
 class AsyncTransitionWithLogging(NestedAsyncTransition):
     async def execute(self, event_data: EventData) -> bool:
-        _LOGGER.debug("%sBefore callbacks:%s",
-                      event_data.machine.name, self.before)
-        _LOGGER.debug("%sAfter callbacks:%s",
-                      event_data.machine.name, self.after)
+        _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name, self.before)
+        _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name, self.after)
 
         return await super().execute(event_data)
 
@@ -136,8 +134,7 @@ if diagrams:
                             "Graph retrieval cannot be bound."
                         )
                     get_graph_method_name = f"get_{self.name[:-2].lower()}_graph"
-                setattr(mod, get_graph_method_name,
-                        partial(self._get_graph, mod))
+                setattr(mod, get_graph_method_name, partial(self._get_graph, mod))
                 _ = getattr(mod, get_graph_method_name)(
                     title=self.title, force_new=True
                 )  # initialises graph
@@ -205,10 +202,8 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             conditions=self._can_restart,
         )
 
-        self.on_enter("restarting↦stopping",
-                      self._stop_and_wait_for_completion)
-        self.on_enter("restarting↦starting",
-                      self._start_and_wait_for_completion)
+        self.on_enter("restarting↦stopping", self._stop_and_wait_for_completion)
+        self.on_enter("restarting↦starting", self._start_and_wait_for_completion)
 
     async def _stop_and_wait_for_completion(self, event_data: EventData) -> None:
         shutdown_event: Event = anyio.create_event()
@@ -426,8 +421,7 @@ def _merge_event_data_kwargs(event_data: EventData) -> dict:
         args = event_data.args
         if args:
             try:
-                event_data = next(
-                    arg for arg in args if isinstance(arg, EventData))
+                event_data = next(arg for arg in args if isinstance(arg, EventData))
             except StopIteration:
                 break
             kwargs.update(event_data.kwargs)
