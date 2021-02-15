@@ -5,7 +5,6 @@ from functools import partial
 from typing import TYPE_CHECKING, Any
 
 import anyio
-import transitions
 from anyio.abc import Event
 from transitions import EventData
 from transitions.core import _LOGGER, MachineError, listify
@@ -258,6 +257,7 @@ class ActorStateMachine(BaseStateMachine):
                 name=name,
                 # queued=True,
                 model_attribute="_state",
+                finalize_event=_crash_if_an_error_occurred,
             )
         else:
             super().__init__(
@@ -266,7 +266,7 @@ class ActorStateMachine(BaseStateMachine):
                 auto_transitions=False,
                 send_event=True,
                 name=name,
-                # queued=True,
+                queued=True,
                 model_attribute="_state",
             )
 
@@ -402,7 +402,7 @@ class ActorStateMachine(BaseStateMachine):
 # endregion
 
 
-async def _release_resources(event_data: transitions.EventData) -> None:
+async def _release_resources(event_data: EventData) -> None:
     await event_data.model._exit_stack.aclose()
 
 
@@ -413,6 +413,20 @@ async def _maybe_set_event(event_data: EventData, event_name: str) -> None:
         await event.set()
     except KeyError:
         pass
+
+
+async def _crash_if_an_error_occurred(event_data: EventData) -> None:
+    error = event_data.error
+    if error:
+        if event_data.state.value != ActorState.crashed:
+            try:
+                await event_data.model.report_error(error)
+            except Exception:
+                # TODO: Log this
+                pass
+        else:
+            # TODO: Log this
+            pass
 
 
 def _merge_event_data_kwargs(event_data: EventData) -> dict:
