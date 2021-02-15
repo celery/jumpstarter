@@ -1,16 +1,10 @@
 import pytest
 from transitions import MachineError
 
-from jumpstarter.states import (
-    ActorRestartState,
-    ActorRestartStateMachine,
-    ActorRunningState,
-    ActorStartedState,
-    ActorStartingState,
-    ActorState,
-    ActorStateMachine,
-    ActorStoppingState,
-)
+from jumpstarter.states import (ActorRestartState, ActorRestartStateMachine,
+                                ActorRunningState, ActorStartedState,
+                                ActorStartingState, ActorState,
+                                ActorStateMachine, ActorStoppingState)
 from tests.mock import ANY, AsyncMock, Mock, call
 
 pytestmark = pytest.mark.anyio
