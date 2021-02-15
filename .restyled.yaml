@@ -1,0 +1,12 @@
+enabled: true
+auto: true
+commit_template: |
+  Fixed formatting (${restyler.name})
+statuses: true
+request_review:
+  origin: author
+  forked: owner
+restylers:
+  - name: whitespace
+  - name: isort
+  - name: black
