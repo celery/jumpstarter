@@ -25,16 +25,21 @@ def state_machine(m):
     state_machine.on_exit_initializing(m.initializing_mock)
     state_machine.on_enter_initialized(m.initialized_mock)
     state_machine.on_enter_starting(m.starting_mock)
-    state_machine.on_enter("starting↦dependencies_started", m.dependencies_started_mock)
-    state_machine.on_enter("starting↦resources_acquired", m.resources_acquired_mock)
+    state_machine.on_enter("starting↦dependencies_started",
+                           m.dependencies_started_mock)
+    state_machine.on_enter("starting↦resources_acquired",
+                           m.resources_acquired_mock)
     state_machine.on_enter("starting↦tasks_started", m.tasks_started_mock)
     state_machine.on_enter_started(m.started_mock)
     state_machine.on_enter("started↦running", m.started_running_mock)
-    state_machine.on_enter("started↦running↦healthy", m.started_running_healthy_mock)
+    state_machine.on_enter("started↦running↦healthy",
+                           m.started_running_healthy_mock)
     state_machine.on_enter_stopping(m.stopping_mock)
     state_machine.on_enter("stopping↦tasks_stopped", m.tasks_stopped_mock)
-    state_machine.on_enter("stopping↦resources_released", m.resources_released_mock)
-    state_machine.on_enter("stopping↦dependencies_stopped", m.dependencies_stopped_mock)
+    state_machine.on_enter("stopping↦resources_released",
+                           m.resources_released_mock)
+    state_machine.on_enter("stopping↦dependencies_stopped",
+                           m.dependencies_stopped_mock)
     state_machine.on_enter_stopped(m.stopped_mock)
     state_machine.on_enter_crashed(m.crashed_mock)
 
@@ -48,19 +53,17 @@ async def test_start(subtests, state_machine, m):
         assert state_machine._state == ActorRunningState.healthy
 
     with subtests.test("states are transitioned in order"):
-        m.assert_has_calls(
-            [
-                call.initializing_mock(ANY),
-                call.initialized_mock(ANY),
-                call.starting_mock(ANY),
-                call.dependencies_started_mock(ANY),
-                call.resources_acquired_mock(ANY),
-                call.tasks_started_mock(ANY),
-                call.started_mock(ANY),
-                call.started_running_mock(ANY),
-                call.started_running_healthy_mock(ANY),
-            ]
-        )
+        m.assert_has_calls([
+            call.initializing_mock(ANY),
+            call.initialized_mock(ANY),
+            call.starting_mock(ANY),
+            call.dependencies_started_mock(ANY),
+            call.resources_acquired_mock(ANY),
+            call.tasks_started_mock(ANY),
+            call.started_mock(ANY),
+            call.started_running_mock(ANY),
+            call.started_running_healthy_mock(ANY),
+        ])
 
     with subtests.test("no invalid transitions occurred"):
         m.stopping_mock.assert_not_called()
@@ -79,15 +82,13 @@ async def test_stop(subtests, state_machine, m):
         assert state_machine.is_stopped(), state_machine._state
 
     with subtests.test("states are transitioned in order"):
-        m.assert_has_calls(
-            [
-                call.stopping_mock(ANY),
-                call.tasks_stopped_mock(ANY),
-                call.resources_released_mock(ANY),
-                call.dependencies_stopped_mock(ANY),
-                call.stopped_mock(ANY),
-            ]
-        )
+        m.assert_has_calls([
+            call.stopping_mock(ANY),
+            call.tasks_stopped_mock(ANY),
+            call.resources_released_mock(ANY),
+            call.dependencies_stopped_mock(ANY),
+            call.stopped_mock(ANY),
+        ])
 
     with subtests.test("no invalid transitions occurred"):
         m.initializing_mock.assert_not_called()
@@ -108,15 +109,13 @@ async def test_stop_paused(subtests, state_machine, m):
         assert state_machine.is_stopped(), state_machine._state
 
     with subtests.test("states are transitioned in order"):
-        m.assert_has_calls(
-            [
-                call.stopping_mock(ANY),
-                call.tasks_stopped_mock(ANY),
-                call.resources_released_mock(ANY),
-                call.dependencies_stopped_mock(ANY),
-                call.stopped_mock(ANY),
-            ]
-        )
+        m.assert_has_calls([
+            call.stopping_mock(ANY),
+            call.tasks_stopped_mock(ANY),
+            call.resources_released_mock(ANY),
+            call.dependencies_stopped_mock(ANY),
+            call.stopped_mock(ANY),
+        ])
 
     with subtests.test("no invalid transitions occurred"):
         m.initializing_mock.assert_not_called()
@@ -128,7 +127,8 @@ async def test_stop_paused(subtests, state_machine, m):
         m.started_mock.assert_not_called()
 
 
-def test_add_model_adds_the_model_to_all_parallel_state_machines(state_machine):
+def test_add_model_adds_the_model_to_all_parallel_state_machines(
+        state_machine):
     fake_state_machine = HierarchicalParallelAnyIOGraphMachine(name="Fake")
     state_machine.register_parallel_state_machine(fake_state_machine)
 

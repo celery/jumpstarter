@@ -13,8 +13,7 @@ async def test_threaded_context_manager(subtests):
     context_manager.__enter__.return_value = sentinel.RETURN_VALUE
 
     threaded_context_manager = ThreadedContextManager(
-        context_manager, anyio.create_capacity_limiter(1)
-    )
+        context_manager, anyio.create_capacity_limiter(1))
 
     with subtests.test("threaded context manager is proxied"):
         assert isinstance(threaded_context_manager, MagicMock)
@@ -38,8 +37,7 @@ async def test_threaded_context_manager_raises_exception(subtests):
     context_manager.__enter__.side_effect = ExpectedException
 
     threaded_context_manager = ThreadedContextManager(
-        context_manager, anyio.create_capacity_limiter(1)
-    )
+        context_manager, anyio.create_capacity_limiter(1))
 
     with subtests.test("exception is raised from __enter__"):
         with pytest.raises(ExpectedException):
@@ -50,7 +48,7 @@ async def test_threaded_context_manager_raises_exception(subtests):
     context_manager.__exit__.return_value = True
 
     with subtests.test(
-        "exception is suppressed from __enter__ since __exit__ returns True"
+            "exception is suppressed from __enter__ since __exit__ returns True"
     ):
         async with threaded_context_manager:
             raise ExpectedException()

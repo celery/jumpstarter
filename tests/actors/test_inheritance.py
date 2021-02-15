@@ -65,8 +65,9 @@ async def test_resource_inheritance():
 
 async def test_actor_state_must_be_of_the_correct_type():
     with pytest.raises(
-        TypeError,
-        match="Actor states must be ActorState or a child class of it. Instead we got object.",
+            TypeError,
+            match=
+            "Actor states must be ActorState or a child class of it. Instead we got object.",
     ):
 
         class FakeActor(Actor, actor_state=object):
@@ -99,19 +100,21 @@ async def test_same_state_machine_is_returned_for_each_actor(subtests):
     factory = ActorStateMachineFactory()
 
     m1 = factory[FakeActor1]
-    with subtests.test("The same state machine is returned once created (FakeActor1)"):
+    with subtests.test(
+            "The same state machine is returned once created (FakeActor1)"):
         assert m1 is factory[FakeActor1]
     with subtests.test("The new state machine is now cached (FakeActor1)"):
         assert len(list(factory.values())) == 1
 
     m2 = factory[FakeActor2]
-    with subtests.test("The same state machine is returned once created (FakeActor2)"):
+    with subtests.test(
+            "The same state machine is returned once created (FakeActor2)"):
         assert m2 is factory[FakeActor2]
     with subtests.test("The new state machine is now cached (FakeActor2)"):
         assert len(list(factory.values())) == 2
 
     with subtests.test(
-        "The new state machine for FakeActor1 is not the same as the one for FakeActor2"
+            "The new state machine for FakeActor1 is not the same as the one for FakeActor2"
     ):
         assert m1 is not m2
 
@@ -134,8 +137,9 @@ async def test_only_single_inheritance_is_supported():
 
     factory = ActorStateMachineFactory()
     with pytest.raises(
-        TypeError,
-        match="Inheritance from multiple Actor base classes is not supported.",
+            TypeError,
+            match=
+            "Inheritance from multiple Actor base classes is not supported.",
     ):
         _ = factory[FakeActor]
 

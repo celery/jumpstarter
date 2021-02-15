@@ -25,8 +25,7 @@ class NotAResourceError(Exception):
     def __init__(self, resource_name: str, return_value: typing.Any) -> None:
         super().__init__(
             f"The return value of {resource_name} is not a context manager.\n"
-            f"Instead we got {return_value}."
-        )
+            f"Instead we got {return_value}.")
 
 
 class ResourceAlreadyExistsError(Exception):
@@ -38,15 +37,15 @@ class ResourceUnavailable(Exception):
 
 
 def is_synchronous_resource(
-    resource: typing.ContextManager | typing.AsyncContextManager,
-) -> bool:
+    resource: typing.ContextManager | typing.AsyncContextManager, ) -> bool:
     return isinstance(resource, typing.ContextManager) and not isinstance(
-        resource, typing.AsyncContextManager
-    )
+        resource, typing.AsyncContextManager)
 
 
 class Resource:
-    def __init__(self, resource_callback: typing.Callable, timeout: float = None):
+    def __init__(self,
+                 resource_callback: typing.Callable,
+                 timeout: float = None):
         self._resource_callback: typing.Callable = resource_callback
         self._timeout: float = timeout
 
@@ -58,7 +57,8 @@ class Resource:
         if self._timeout:
 
             @wraps(self._resource_callback)
-            async def resource_acquirer(event_data: transitions.EventData) -> None:
+            async def resource_acquirer(
+                    event_data: transitions.EventData) -> None:
                 self_ = event_data.model
 
                 try:
@@ -78,7 +78,8 @@ class Resource:
         else:
 
             @wraps(self._resource_callback)
-            async def resource_acquirer(event_data: transitions.EventData) -> None:
+            async def resource_acquirer(
+                    event_data: transitions.EventData) -> None:
                 self_ = event_data.model
 
                 try:
@@ -109,21 +110,20 @@ class Resource:
 
 
 class ThreadedContextManager(ObjectProxy):
-    def __init__(
-        self, context_manager: typing.ContextManager, capacity_limiter: CapacityLimiter
-    ):
+    def __init__(self, context_manager: typing.ContextManager,
+                 capacity_limiter: CapacityLimiter):
         super().__init__(context_manager)
         self._capacity_limiter = capacity_limiter
 
     async def __aenter__(self) -> typing.Any:
         return await anyio.run_sync_in_worker_thread(
-            self.__wrapped__.__enter__, limiter=self._capacity_limiter
-        )
+            self.__wrapped__.__enter__, limiter=self._capacity_limiter)
 
     async def __aexit__(self, *exc_info) -> bool | None:
         return await anyio.run_sync_in_worker_thread(
-            self.__wrapped__.__exit__, *exc_info, limiter=self._capacity_limiter
-        )
+            self.__wrapped__.__exit__,
+            *exc_info,
+            limiter=self._capacity_limiter)
 
 
 def resource(

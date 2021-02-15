@@ -8,8 +8,7 @@ from nox_poetry import session
 def install_transitions_from_git(session):
     # TODO: Remove this once 0.8.7 is released.
     session.poetry.session.install(
-        "git+https://git@github.com/pytransitions/transitions.git"
-    )
+        "git+https://git@github.com/pytransitions/transitions.git")
 
 
 @session
@@ -17,14 +16,14 @@ def build_docs(session: Session):
     session.install(".")
     session.run("poetry", "install", external=True)
     install_transitions_from_git(session)
-    session.run("sphinx-autodoc", "-e", "-T", "jumpstarter/", "-o", "docs/reference")
-    session.run(
-        "sphinx-build", "-b", "html", "-j", "auto", "docs/", "docs/_build/_html"
-    )
+    session.run("sphinx-autodoc", "-e", "-T", "jumpstarter/", "-o",
+                "docs/reference")
+    session.run("sphinx-build", "-b", "html", "-j", "auto", "docs/",
+                "docs/_build/_html")
 
 
 @session(python=("3.7", "3.8", "3.9"))
-@nox.parametrize("extras", [None, ("diagrams",)], ids=["none", "diagrams"])
+@nox.parametrize("extras", [None, ("diagrams", )], ids=["none", "diagrams"])
 def test(session: Session, extras) -> None:
     """Run the test suite."""
     if extras:
@@ -33,9 +32,8 @@ def test(session: Session, extras) -> None:
         session.install(".")
     session.run("poetry", "install", external=True)
     install_transitions_from_git(session)
-    session.run(
-        "pytest", "-nauto", "--cov=jumpstarter", "--cov-branch", "--cov-report=xml"
-    )
+    session.run("pytest", "-nauto", "--cov=jumpstarter", "--cov-branch",
+                "--cov-report=xml")
 
 
 @session
@@ -44,9 +42,13 @@ def retype(session: Session) -> None:
     session.install(".")
     session.run("poetry", "install", external=True)
     install_transitions_from_git(session)
-    session.run("pytest", "--monkeytype-output=./monkeytype.sqlite3", silent=True)
+    session.run("pytest",
+                "--monkeytype-output=./monkeytype.sqlite3",
+                silent=True)
     result = session.run("monkeytype", "list-modules", silent=True)
-    results = [module for module in result.split("\n") if "jumpstarter." in module]
+    results = [
+        module for module in result.split("\n") if "jumpstarter." in module
+    ]
 
     for result in results:
         session.run("monkeytype", "apply", result)
