@@ -25,7 +25,8 @@ except ImportError:
 
     diagrams = False
 else:
-    from transitions_anyio import HierarchicalAnyIOGraphMachine as BaseStateMachine
+    from transitions_anyio import \
+        HierarchicalAnyIOGraphMachine as BaseStateMachine
     from transitions_anyio import HierarchicalAnyIOMachine
 
     diagrams = True
