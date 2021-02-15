@@ -174,6 +174,7 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             send_event=True,
             queued=True,
             name="Restart",
+            finalize_event=_crash_if_an_error_occurred,
         )
 
         self.add_transition(
@@ -200,6 +201,8 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             after="restart",
             conditions=self._can_restart,
         )
+
+        self.add_transition("abort_restart", "*", restart_state.ignore)
 
         self.on_enter("restarting↦stopping", self._stop_and_wait_for_completion)
         self.on_enter("restarting↦starting", self._start_and_wait_for_completion)
@@ -419,7 +422,11 @@ async def _crash_if_an_error_occurred(event_data: EventData) -> None:
     if error:
         if event_data.state.value != ActorState.crashed:
             try:
-                await event_data.model.report_error(error)
+                model = event_data.model
+
+                async with anyio.create_task_group() as task_group:
+                    await task_group.spawn(model.abort_restart, error)
+                    await task_group.spawn(model.report_error, error)
             except Exception:
                 # TODO: Log this
                 pass
