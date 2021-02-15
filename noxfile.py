@@ -4,18 +4,10 @@ import nox
 from nox_poetry import Session, session
 
 
-def install_transitions_from_git(session):
-    # TODO: Remove this once 0.8.7 is released.
-    session.poetry.session.install(
-        "git+https://git@github.com/pytransitions/transitions.git"
-    )
-
-
 @session
 def build_docs(session: Session):
     session.install(".")
     session.run("poetry", "install", external=True)
-    install_transitions_from_git(session)
     session.run("sphinx-autodoc", "-e", "-T", "jumpstarter/", "-o", "docs/reference")
     session.run(
         "sphinx-build", "-b", "html", "-j", "auto", "docs/", "docs/_build/_html"
@@ -31,7 +23,6 @@ def test(session: Session, extras) -> None:
     else:
         session.install(".")
     session.run("poetry", "install", external=True)
-    install_transitions_from_git(session)
     session.run(
         "pytest", "-nauto", "--cov=jumpstarter", "--cov-branch", "--cov-report=xml"
     )
@@ -42,7 +33,6 @@ def retype(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
     session.run("poetry", "install", external=True)
-    install_transitions_from_git(session)
     session.run("pytest", "--monkeytype-output=./monkeytype.sqlite3", silent=True)
     result = session.run("monkeytype", "list-modules", silent=True)
     results = [module for module in result.split("\n") if "jumpstarter." in module]
@@ -57,7 +47,6 @@ def retype(session: Session) -> None:
 def format(session: Session) -> None:
     session.install(".")
     session.run("poetry", "install", external=True)
-    install_transitions_from_git(session)
 
     session.log("Upgrade code to Python 3.7+")
     for file in glob.glob("./**/*.py", recursive=True):
