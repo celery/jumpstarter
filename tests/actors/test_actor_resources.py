@@ -15,7 +15,7 @@ pytestmark = pytest.mark.anyio
 
 
 @pytest.mark.parametrize(
-    ("resource_type",),
+    ("resource_type", ),
     (
         pytest.param(MagicMock, id="sync resource"),
         pytest.param(AsyncMock, id="async resource"),
@@ -46,17 +46,19 @@ async def test_acquire_resource(subtests, resource_type):
     await fake_actor.stop()
 
     with subtests.test("__aexit__ is called"):
-        resource_mock.__aexit__.assert_called_once_with(resource_mock, None, None, None)
+        resource_mock.__aexit__.assert_called_once_with(
+            resource_mock, None, None, None)
 
 
 @pytest.mark.parametrize(
-    ("resource_type",),
+    ("resource_type", ),
     (
         pytest.param(MagicMock, id="sync resource"),
         pytest.param(AsyncMock, id="async resource"),
     ),
 )
-async def test_acquire_resource_within_specified_timeout(subtests, resource_type):
+async def test_acquire_resource_within_specified_timeout(
+        subtests, resource_type):
     resource_mock = resource_type()
 
     class FakeActor(Actor):
@@ -81,7 +83,8 @@ async def test_acquire_resource_within_specified_timeout(subtests, resource_type
     await fake_actor.stop()
 
     with subtests.test("__aexit__ is called"):
-        resource_mock.__aexit__.assert_called_once_with(resource_mock, None, None, None)
+        resource_mock.__aexit__.assert_called_once_with(
+            resource_mock, None, None, None)
 
 
 async def test_acquire_async_resource_timed_out(subtests):
@@ -129,14 +132,16 @@ async def test_acquire_resource_not_a_resource(subtests):
     a = FakeActorWithAFaultyResource()
 
     with pytest.raises(
-        NotAResourceError,
-        match=r"The return value of not_a_resource is not a context manager\.\n"
-        r"Instead we got <object object at 0x[0-9a-f]+>\.",
+            NotAResourceError,
+            match=
+            r"The return value of not_a_resource is not a context manager\.\n"
+            r"Instead we got <object object at 0x[0-9a-f]+>\.",
     ):
         await a.start()
 
 
-async def test_acquire_resource_within_specified_timeout_not_a_resource(subtests):
+async def test_acquire_resource_within_specified_timeout_not_a_resource(
+        subtests):
     class FakeActorWithAFaultyResource(Actor):
         @resource(timeout=1)
         def not_a_resource(self):
@@ -145,9 +150,10 @@ async def test_acquire_resource_within_specified_timeout_not_a_resource(subtests
     a = FakeActorWithAFaultyResource()
 
     with pytest.raises(
-        NotAResourceError,
-        match=r"The return value of not_a_resource is not a context manager\.\n"
-        r"Instead we got <object object at 0x[0-9a-f]+>\.",
+            NotAResourceError,
+            match=
+            r"The return value of not_a_resource is not a context manager\.\n"
+            r"Instead we got <object object at 0x[0-9a-f]+>\.",
     ):
         await a.start()
 

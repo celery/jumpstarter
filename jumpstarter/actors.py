@@ -28,15 +28,13 @@ class ActorStateMachineFactory(dict):
             Actor
         except NameError:
             state_machine: ActorStateMachine = ActorStateMachine(
-                actor_state=key.actor_state, name="Actor"
-            )
+                actor_state=key.actor_state, name="Actor")
             self[key] = state_machine
             return state_machine
         else:
             if key is Actor:
                 state_machine: ActorStateMachine = ActorStateMachine(
-                    actor_state=key.actor_state, name="Actor"
-                )
+                    actor_state=key.actor_state, name="Actor")
                 self[key] = state_machine
                 return state_machine
 
@@ -50,15 +48,15 @@ class ActorStateMachineFactory(dict):
                 "Inheritance from multiple Actor base classes is not supported."
             )
 
-        actor_base_class = next(base for base in bases if issubclass(base, Actor))
+        actor_base_class = next(base for base in bases
+                                if issubclass(base, Actor))
 
         if actor_base_class.actor_state is not key.actor_state:
             raise TypeError(
                 f"The actor state of {key}, {key.actor_state}, "
                 f"must be of the same type as the actor state of {actor_base_class} "
                 f"which uses {actor_base_class.actor_state}.\n"
-                "Using a different actor state is currently unsupported."
-            )
+                "Using a different actor state is currently unsupported.")
 
         # We must deepcopy here or otherwise transitions copies the state machine's callbacks by **reference**
         # This results in callbacks registered in one actor ending up in another.
@@ -75,8 +73,7 @@ class ActorStateMachineFactory(dict):
 class Actor:
     # region Class Attributes
     __state_machine: typing.ClassVar[
-        ActorStateMachineFactory
-    ] = ActorStateMachineFactory()
+        ActorStateMachineFactory] = ActorStateMachineFactory()
 
     actor_state = ActorState
 
@@ -102,8 +99,7 @@ class Actor:
     def _global_worker_threads_capacity(cls) -> CapacityLimiter:
         if cls.__global_worker_threads_capacity_limiter is None:
             cls.__global_worker_threads_capacity_limiter = (
-                anyio.create_capacity_limiter(os.cpu_count())
-            )
+                anyio.create_capacity_limiter(os.cpu_count()))
 
         return cls.__global_worker_threads_capacity_limiter
 
@@ -112,21 +108,22 @@ class Actor:
     # region Dunder methods
 
     def __init__(
-        self, *, actor_id: typing.Optional[typing.Union[str, UUID]] = None
-    ) -> None:
+            self,
+            *,
+            actor_id: typing.Optional[typing.Union[str, UUID]] = None) -> None:
         cls: typing.Type = type(self)
         cls._state_machine.add_model(self)
 
         self._exit_stack: AsyncExitStack = AsyncExitStack()
 
-        self._resources: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(
-            lambda: None
-        )
+        self._resources: typing.Dict[
+            str, typing.Optional[typing.Any]] = defaultdict(lambda: None)
         self.__actor_id = actor_id or uuid4()
 
-    def __init_subclass__(
-        cls, *, actor_state: typing.Optional[ActorState] = ActorState
-    ):
+    def __init_subclass__(cls,
+                          *,
+                          actor_state: typing.Optional[ActorState] = ActorState
+                          ):
         cls.actor_state = actor_state
 
         if not issubclass(actor_state, ActorState):
@@ -144,7 +141,8 @@ class Actor:
         for machine in self._state_machine._parallel_state_machines:
             if machine.get_model_state(self).name == "ignore":
                 continue
-            parallel_states[machine.name[:-2]] = getattr(self, machine.model_attribute)
+            parallel_states[machine.name[:-2]] = getattr(
+                self, machine.model_attribute)
 
         if parallel_states:
             parallel_states[self._state_machine.name[:-2]] = self._state
@@ -156,20 +154,20 @@ class Actor:
     def actor_id(self):
         return self.__actor_id
 
-    async def manage_resource_lifecycle(
-        self, resource: typing.AsyncContextManager, name: str
-    ) -> None:
+    async def manage_resource_lifecycle(self,
+                                        resource: typing.AsyncContextManager,
+                                        name: str) -> None:
         if self._resources.get(name, None):
             raise ResourceAlreadyExistsError(name, self._resources[name])
 
         if is_synchronous_resource(resource):
             cls = type(self)
             resource = ThreadedContextManager(
-                resource, cls._global_worker_threads_capacity
-            )
+                resource, cls._global_worker_threads_capacity)
 
         try:
-            self._resources[name] = await self._exit_stack.enter_async_context(resource)
+            self._resources[name] = await self._exit_stack.enter_async_context(
+                resource)
         except AttributeError as e:
             raise NotAResourceError(name, resource) from e
 
@@ -197,8 +195,7 @@ class Actor:
     @classmethod
     def draw_state_machine_graph(cls, path: str) -> None:
         graph = cls._state_machine.get_graph(
-            title=cls._state_machine.name[:-2].replace("_", " ").capitalize()
-        )
+            title=cls._state_machine.name[:-2].replace("_", " ").capitalize())
         graph.node_attr["style"] = "filled"
 
         parallel_state_machines = cls._state_machine._parallel_state_machines
@@ -207,8 +204,7 @@ class Actor:
             [
                 machine.get_graph(
                     title=f"{machine.name[:-2].replace('_', ' ').capitalize()}"
-                )
-                for machine in parallel_state_machines
+                ) for machine in parallel_state_machines
             ],
         )
 
@@ -257,15 +253,13 @@ class Actor:
         for i, machine_graph in enumerate(subgraphs):
             # This is either an existing cluster or a new one.
             # If it is a new cluster we need to generate a name for it.
-            name = (
-                machine_graph.name
-                if machine_graph.name and machine_graph.name.startswith("cluster")
-                else f"cluster_{i}"
-            )
+            name = (machine_graph.name if machine_graph.name
+                    and machine_graph.name.startswith("cluster") else
+                    f"cluster_{i}")
 
-            new_subgraph = graph.add_subgraph(
-                machine_graph.nodes(), name=name, **machine_graph.graph_attr
-            )
+            new_subgraph = graph.add_subgraph(machine_graph.nodes(),
+                                              name=name,
+                                              **machine_graph.graph_attr)
             new_subgraph.add_edges_from(machine_graph.edges())
 
             # Copy nodes' and edges' attributes

@@ -23,5 +23,4 @@ globals().update(
             "sphinx.ext.autodoc",
             "sphinx_autodoc_typehints",
         ],
-    )
-)
+    ))

@@ -38,7 +38,6 @@ else:
 
 NestedState.separator = "↦"
 
-
 # region Enums
 
 
@@ -77,9 +76,8 @@ class ActorRunningState(Enum):
 
 
 class ActorStartedState(Enum):
-    running = ChildStateEnum(
-        children=ActorRunningState, initial=ActorRunningState.healthy
-    )
+    running = ChildStateEnum(children=ActorRunningState,
+                             initial=ActorRunningState.healthy)
     paused = auto()
 
 
@@ -90,9 +88,8 @@ class ActorRestartingState(Enum):
 
 class ActorRestartState(Enum):
     ignore = auto()
-    restarting = ChildStateEnum(
-        children=ActorRestartingState, initial=ActorRestartingState.stopping
-    )
+    restarting = ChildStateEnum(children=ActorRestartingState,
+                                initial=ActorRestartingState.stopping)
     restarted = auto()
 
 
@@ -100,9 +97,8 @@ class ActorState(Enum):
     initializing = auto()
     initialized = auto()
     starting = ActorStartingState
-    started = ChildStateEnum(
-        children=ActorStartedState, initial=ActorStartedState.running
-    )
+    started = ChildStateEnum(children=ActorStartedState,
+                             initial=ActorStartedState.running)
     stopping = ActorStoppingState
     stopped = auto()
     crashed = auto()
@@ -117,8 +113,10 @@ class ActorState(Enum):
 
 class AsyncTransitionWithLogging(NestedAsyncTransition):
     async def execute(self, event_data: EventData) -> bool:
-        _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name, self.before)
-        _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name, self.after)
+        _LOGGER.debug("%sBefore callbacks:%s", event_data.machine.name,
+                      self.before)
+        _LOGGER.debug("%sAfter callbacks:%s", event_data.machine.name,
+                      self.after)
 
         return await super().execute(event_data)
 
@@ -136,23 +134,19 @@ if diagrams:
                     if not self.name:
                         raise AttributeError(
                             "Model already has a get_graph attribute and state machine name was not specified. "
-                            "Graph retrieval cannot be bound."
-                        )
+                            "Graph retrieval cannot be bound.")
                     get_graph_method_name = f"get_{self.name[:-2].lower()}_graph"
-                setattr(mod, get_graph_method_name, partial(self._get_graph, mod))
+                setattr(mod, get_graph_method_name,
+                        partial(self._get_graph, mod))
                 _ = getattr(mod, get_graph_method_name)(
-                    title=self.title, force_new=True
-                )  # initialises graph
+                    title=self.title, force_new=True)  # initialises graph
 
-    class HierarchicalParallelAnyIOGraphMachine(
-        ParallelGraphMachine, HierarchicalAnyIOMachine
-    ):
+    class HierarchicalParallelAnyIOGraphMachine(ParallelGraphMachine,
+                                                HierarchicalAnyIOMachine):
         transition_cls = NestedAsyncTransition
-
 
 else:
     HierarchicalParallelAnyIOGraphMachine = BaseStateMachine
-
 
 # endregion
 
@@ -195,9 +189,8 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             restart_state.restarting.value.starting,
             after="restart",
         )
-        self.add_transition(
-            "restart", restart_state.restarting.value.starting, restart_state.restarted
-        )
+        self.add_transition("restart", restart_state.restarting.value.starting,
+                            restart_state.restarted)
 
         self.add_transition(
             "restart",
@@ -207,25 +200,27 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             conditions=self._can_restart,
         )
 
-        self.on_enter("restarting↦stopping", self._stop_and_wait_for_completion)
-        self.on_enter("restarting↦starting", self._start_and_wait_for_completion)
+        self.on_enter("restarting↦stopping",
+                      self._stop_and_wait_for_completion)
+        self.on_enter("restarting↦starting",
+                      self._start_and_wait_for_completion)
 
-    async def _stop_and_wait_for_completion(self, event_data: EventData) -> None:
+    async def _stop_and_wait_for_completion(self,
+                                            event_data: EventData) -> None:
         shutdown_event: Event = anyio.create_event()
 
         async with anyio.create_task_group() as task_group:
             await task_group.spawn(
-                partial(event_data.model.stop, shutdown_event=shutdown_event)
-            )
+                partial(event_data.model.stop, shutdown_event=shutdown_event))
             await task_group.spawn(shutdown_event.wait)
 
-    async def _start_and_wait_for_completion(self, event_data: EventData) -> None:
+    async def _start_and_wait_for_completion(self,
+                                             event_data: EventData) -> None:
         bootup_event: Event = anyio.create_event()
 
         async with anyio.create_task_group() as task_group:
             await task_group.spawn(
-                partial(event_data.model.start, bootup_event=bootup_event)
-            )
+                partial(event_data.model.start, bootup_event=bootup_event))
             await task_group.spawn(bootup_event.wait)
 
     def _can_restart(self, event_data: EventData) -> bool:
@@ -287,13 +282,16 @@ class ActorStateMachine(BaseStateMachine):
 
     # region Public API
 
-    def add_model(self, model: str | Actor, initial: Any | None = None) -> None:
+    def add_model(self,
+                  model: str | Actor,
+                  initial: Any | None = None) -> None:
         super().add_model(model, initial=initial)
 
         for machine in self._parallel_state_machines:
             machine.add_model(model, initial=initial)
 
-    def register_parallel_state_machine(self, machine: BaseStateMachine) -> None:
+    def register_parallel_state_machine(self,
+                                        machine: BaseStateMachine) -> None:
         self._parallel_state_machines.append(machine)
 
     # endregion
@@ -302,17 +300,18 @@ class ActorStateMachine(BaseStateMachine):
 
     def _create_crashed_transitions(self, actor_state):
         self.add_transition("report_error", "*", actor_state.crashed)
-        self.add_transition(
-            "stop", actor_state.crashed, actor_state.stopping, after="stop"
-        )
-        self.add_transition(
-            "start", actor_state.crashed, actor_state.starting, after="start"
-        )
+        self.add_transition("stop",
+                            actor_state.crashed,
+                            actor_state.stopping,
+                            after="stop")
+        self.add_transition("start",
+                            actor_state.crashed,
+                            actor_state.starting,
+                            after="start")
 
     def _create_started_substates_transitions(self, actor_state):
-        self.add_transition(
-            "pause", actor_state.started.value.running, actor_state.started.value.paused
-        )
+        self.add_transition("pause", actor_state.started.value.running,
+                            actor_state.started.value.paused)
         self.add_transition(
             "resume",
             actor_state.started.value.paused,
@@ -345,9 +344,10 @@ class ActorStateMachine(BaseStateMachine):
         )
 
     def _create_restart_transitions(self, actor_state):
-        self.add_transition(
-            "start", actor_state.stopped, actor_state.starting, after="start"
-        )
+        self.add_transition("start",
+                            actor_state.stopped,
+                            actor_state.starting,
+                            after="start")
 
     def _create_shutdown_transitions(self, actor_state):
         self.add_ordered_transitions(
@@ -377,9 +377,8 @@ class ActorStateMachine(BaseStateMachine):
         transition.before.append(_release_resources)
 
     def _create_bootup_transitions(self, actor_state):
-        self.add_transition(
-            "initialize", actor_state.initializing, actor_state.initialized
-        )
+        self.add_transition("initialize", actor_state.initializing,
+                            actor_state.initialized)
 
         self.add_ordered_transitions(
             states=[
@@ -426,7 +425,8 @@ def _merge_event_data_kwargs(event_data: EventData) -> dict:
         args = event_data.args
         if args:
             try:
-                event_data = next(arg for arg in args if isinstance(arg, EventData))
+                event_data = next(arg for arg in args
+                                  if isinstance(arg, EventData))
             except StopIteration:
                 break
             kwargs.update(event_data.kwargs)

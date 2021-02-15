@@ -69,7 +69,8 @@ async def test_actor_can_pause_and_resume_after_start():
     assert fake_actor.state == ActorRunningState.healthy
 
 
-@pytest.mark.parametrize("state", ActorRestartStateMachine.restart_allowed_from)
+@pytest.mark.parametrize("state",
+                         ActorRestartStateMachine.restart_allowed_from)
 async def test_actor_can_restart(state):
     class FakeActor(Actor):
         ...
