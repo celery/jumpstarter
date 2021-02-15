@@ -24,16 +24,21 @@ def state_machine(m):
     state_machine.on_exit_initializing(m.initializing_mock)
     state_machine.on_enter_initialized(m.initialized_mock)
     state_machine.on_enter_starting(m.starting_mock)
-    state_machine.on_enter("starting↦dependencies_started", m.dependencies_started_mock)
-    state_machine.on_enter("starting↦resources_acquired", m.resources_acquired_mock)
+    state_machine.on_enter("starting↦dependencies_started",
+                           m.dependencies_started_mock)
+    state_machine.on_enter("starting↦resources_acquired",
+                           m.resources_acquired_mock)
     state_machine.on_enter("starting↦tasks_started", m.tasks_started_mock)
     state_machine.on_enter_started(m.started_mock)
     state_machine.on_enter("started↦running", m.started_running_mock)
-    state_machine.on_enter("started↦running↦healthy", m.started_running_healthy_mock)
+    state_machine.on_enter("started↦running↦healthy",
+                           m.started_running_healthy_mock)
     state_machine.on_enter_stopping(m.stopping_mock)
     state_machine.on_enter("stopping↦tasks_stopped", m.tasks_stopped_mock)
-    state_machine.on_enter("stopping↦resources_released", m.resources_released_mock)
-    state_machine.on_enter("stopping↦dependencies_stopped", m.dependencies_stopped_mock)
+    state_machine.on_enter("stopping↦resources_released",
+                           m.resources_released_mock)
+    state_machine.on_enter("stopping↦dependencies_stopped",
+                           m.dependencies_stopped_mock)
     state_machine.on_enter_stopped(m.stopped_mock)
     state_machine.on_enter_crashed(m.crashed_mock)
 

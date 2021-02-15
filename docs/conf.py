@@ -16,5 +16,6 @@ globals().update(conf.build_config(
     set_type_checking_flag=True,
     always_document_param_types=True,
     typehints_fully_qualified=True,
-    extra_extensions=['sphinx_pyreverse', 'sphinx.ext.autodoc', 'sphinx_autodoc_typehints']
+    extra_extensions=['sphinx_pyreverse',
+                      'sphinx.ext.autodoc', 'sphinx_autodoc_typehints']
 ))
