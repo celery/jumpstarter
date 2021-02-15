@@ -50,7 +50,8 @@ class ActorStateMachineFactory(dict):
                 "Inheritance from multiple Actor base classes is not supported."
             )
 
-        actor_base_class = next(base for base in bases if issubclass(base, Actor))
+        actor_base_class = next(
+            base for base in bases if issubclass(base, Actor))
 
         if actor_base_class.actor_state is not key.actor_state:
             raise TypeError(
@@ -144,7 +145,8 @@ class Actor:
         for machine in self._state_machine._parallel_state_machines:
             if machine.get_model_state(self).name == "ignore":
                 continue
-            parallel_states[machine.name[:-2]] = getattr(self, machine.model_attribute)
+            parallel_states[machine.name[:-2]
+                            ] = getattr(self, machine.model_attribute)
 
         if parallel_states:
             parallel_states[self._state_machine.name[:-2]] = self._state
