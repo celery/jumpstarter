@@ -4,9 +4,13 @@ from uuid import UUID
 import pytest
 
 from jumpstarter import Actor
-from jumpstarter.states import (ActorRestartState, ActorRestartStateMachine,
-                                ActorRunningState, ActorStartedState,
-                                ActorState)
+from jumpstarter.states import (
+    ActorRestartState,
+    ActorRestartStateMachine,
+    ActorRunningState,
+    ActorStartedState,
+    ActorState,
+)
 
 pytestmark = pytest.mark.anyio
 
