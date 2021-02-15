@@ -4,16 +4,19 @@ import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
 from copy import deepcopy
-from uuid import UUID, uuid4
+from uuid import UUID
+from uuid import uuid4
 
 import anyio
 from anyio.abc import CapacityLimiter
 
-from jumpstarter.resources import (NotAResourceError,
-                                   ResourceAlreadyExistsError,
-                                   ThreadedContextManager,
-                                   is_synchronous_resource, resource)
-from jumpstarter.states import ActorState, ActorStateMachine
+from jumpstarter.resources import is_synchronous_resource
+from jumpstarter.resources import NotAResourceError
+from jumpstarter.resources import resource
+from jumpstarter.resources import ResourceAlreadyExistsError
+from jumpstarter.resources import ThreadedContextManager
+from jumpstarter.states import ActorState
+from jumpstarter.states import ActorStateMachine
 
 
 class ActorStateMachineFactory(dict):

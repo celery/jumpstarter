@@ -1,6 +1,7 @@
 import pytest
 
-from jumpstarter import Actor, resource
+from jumpstarter import Actor
+from jumpstarter import resource
 from jumpstarter.actors import ActorStateMachineFactory
 from jumpstarter.states import ActorStartingState
 
