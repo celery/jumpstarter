@@ -2,7 +2,8 @@ import anyio
 import pytest
 
 from jumpstarter.resources import ThreadedContextManager
-from tests.mock import MagicMock, sentinel
+from tests.mock import MagicMock
+from tests.mock import sentinel
 
 pytestmark = pytest.mark.anyio
 

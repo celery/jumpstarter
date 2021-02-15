@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from enum import Enum, auto
+from enum import auto
+from enum import Enum
 from functools import partial
-from typing import TYPE_CHECKING, Any
+from typing import Any
+from typing import TYPE_CHECKING
 
 import anyio
 from anyio.abc import Event
 from transitions import EventData
-from transitions.core import _LOGGER, MachineError, listify
+from transitions.core import _LOGGER
+from transitions.core import listify
+from transitions.core import MachineError
 from transitions.extensions import GraphMachine
 from transitions.extensions.asyncio import NestedAsyncTransition
 from transitions.extensions.nesting import NestedState

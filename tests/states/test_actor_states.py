@@ -1,9 +1,13 @@
 import pytest
 
-from jumpstarter.states import (ActorRunningState, ActorStateMachine,
-                                HierarchicalParallelAnyIOGraphMachine,
-                                diagrams)
-from tests.mock import ANY, AsyncMock, Mock, call
+from jumpstarter.states import ActorRunningState
+from jumpstarter.states import ActorStateMachine
+from jumpstarter.states import diagrams
+from jumpstarter.states import HierarchicalParallelAnyIOGraphMachine
+from tests.mock import ANY
+from tests.mock import AsyncMock
+from tests.mock import call
+from tests.mock import Mock
 
 pytestmark = pytest.mark.anyio
 

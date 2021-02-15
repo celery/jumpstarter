@@ -1,10 +1,15 @@
 import anyio
 import pytest
 
-from jumpstarter import Actor, resource
-from jumpstarter.resources import NotAResourceError, ResourceUnavailable
-from jumpstarter.states import ActorRunningState, ActorState
-from tests.mock import AsyncMock, MagicMock, sentinel
+from jumpstarter import Actor
+from jumpstarter import resource
+from jumpstarter.resources import NotAResourceError
+from jumpstarter.resources import ResourceUnavailable
+from jumpstarter.states import ActorRunningState
+from jumpstarter.states import ActorState
+from tests.mock import AsyncMock
+from tests.mock import MagicMock
+from tests.mock import sentinel
 
 pytestmark = pytest.mark.anyio
 

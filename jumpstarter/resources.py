@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import typing
-from functools import partial, wraps
+from functools import partial
+from functools import wraps
 
 import anyio
 import transitions
