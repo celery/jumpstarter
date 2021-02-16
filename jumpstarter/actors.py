@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import os
 import sys
 import typing
 from collections import defaultdict
 from contextlib import AsyncExitStack
 from copy import deepcopy
+from functools import partial
 from uuid import UUID, uuid4
 
 import anyio
 from anyio.abc import CapacityLimiter
+from networkx import DiGraph, ancestors
+from transitions import EventData
 
 from jumpstarter.resources import (
     NotAResourceError,
@@ -20,7 +25,7 @@ from jumpstarter.states import ActorState, ActorStateMachine
 
 
 class ActorStateMachineFactory(dict):
-    def __missing__(self, key: typing.Type):
+    def __missing__(self, key: type):
         # We can't check for actor type during module initialization
         # so we check if the Actor class is already defined instead.
         # If it's not, we simply assume that this is the state machine for the Actor class.
@@ -72,6 +77,36 @@ class ActorStateMachineFactory(dict):
         return state_machine
 
 
+class UnsatisfiedDependencyError(TypeError):
+    pass
+
+
+async def _start_dependency(event_data: EventData, actor_type=None) -> None:
+    try:
+        actor = event_data.model._dependencies[actor_type]
+    except KeyError:
+        raise UnsatisfiedDependencyError(actor_type)
+
+    bootup_event = anyio.create_event()
+
+    async with anyio.create_task_group() as task_group:
+        await task_group.spawn(partial(actor.start, bootup_event=bootup_event))
+        await task_group.spawn(bootup_event.wait)
+
+
+async def _stop_dependency(event_data: EventData, actor_type=None) -> None:
+    try:
+        actor = event_data.model._dependencies[actor_type]
+    except KeyError:
+        raise UnsatisfiedDependencyError(actor_type)
+
+    shutdown_event = anyio.create_event()
+
+    async with anyio.create_task_group() as task_group:
+        await task_group.spawn(partial(actor.stop, shutdown_event=shutdown_event))
+        await task_group.spawn(shutdown_event.wait)
+
+
 class Actor:
     # region Class Attributes
     __state_machine: typing.ClassVar[
@@ -79,6 +114,8 @@ class Actor:
     ] = ActorStateMachineFactory()
 
     actor_state = ActorState
+
+    __dependency_graph: DiGraph = DiGraph()
 
     __global_worker_threads_capacity_limiter = None
 
@@ -100,6 +137,11 @@ class Actor:
 
             return cls.__global_worker_threads_capacity_limiter
 
+        @classmethod
+        @property
+        def dependencies(cls) -> set[type]:
+            return set(cls.__dependency_graph[cls])
+
     else:
         from jumpstarter.backports import classproperty
 
@@ -116,25 +158,29 @@ class Actor:
 
             return cls.__global_worker_threads_capacity_limiter
 
+        @classproperty
+        def dependencies(cls) -> set[type]:
+            return set(cls.__dependency_graph[cls])
+
     # endregion
 
     # region Dunder methods
 
-    def __init__(
-        self, *, actor_id: typing.Optional[typing.Union[str, UUID]] = None
-    ) -> None:
-        cls: typing.Type = type(self)
+    def __init__(self, *, actor_id: str | UUID | None = None) -> None:
+        cls: type = type(self)
         cls._state_machine.add_model(self)
 
         self._exit_stack: AsyncExitStack = AsyncExitStack()
 
-        self._resources: typing.Dict[str, typing.Optional[typing.Any]] = defaultdict(
-            lambda: None
-        )
+        self._resources: dict[str, typing.Any | None] = defaultdict(lambda: None)
         self.__actor_id = actor_id or uuid4()
+        self._dependencies: dict[type, Actor] = {}
 
     def __init_subclass__(
-        cls, *, actor_state: typing.Optional[ActorState] = ActorState
+        cls,
+        *,
+        dependencies: typing.Iterable[type] = None,
+        actor_state: ActorState | None = ActorState,
     ):
         cls.actor_state = actor_state
 
@@ -143,17 +189,77 @@ class Actor:
                 f"Actor states must be ActorState or a child class of it. Instead we got {actor_state.__name__}."
             )
 
+        cls.__dependency_graph.add_node(cls)
+
+        if dependencies:
+            invalid_dependencies: list[type] = [
+                dep for dep in dependencies if not issubclass(dep, Actor)
+            ]
+
+            if invalid_dependencies:
+                invalid_dependencies_str = "\n".join(
+                    f"{dep.__module__}.{dep.__qualname__}"
+                    for dep in invalid_dependencies
+                )
+                raise TypeError(
+                    "The following dependencies are not actors and therefore invalid:\n"
+                    f"{invalid_dependencies_str}"
+                )
+
+            dependencies: set[type] = {
+                dep
+                for dep in dependencies
+                if ancestors(cls.__dependency_graph, dep).isdisjoint(dependencies)
+            }
+            # Only add the dependency to the graph if it is not already a dependency of another actor
+            cls.__dependency_graph.add_edges_from((cls, dep) for dep in dependencies)
+
+            start_dependencies_transition = cls._state_machine.get_transitions(
+                "start",
+                actor_state.starting,
+                actor_state.starting.value.dependencies_started,
+            )[0]
+            stop_dependencies_transition = cls._state_machine.get_transitions(
+                "stop",
+                actor_state.stopping.value.resources_released,
+                actor_state.stopping.value.dependencies_stopped,
+            )[0]
+            for dep in dependencies:
+                start_dependencies_transition.before.append(
+                    partial(_start_dependency, actor_type=dep)
+                )
+                stop_dependencies_transition.before.append(
+                    partial(_stop_dependency, actor_type=dep)
+                )
+
     # endregion
 
     # region Public API
 
+    def satisfy_dependency(self, dependency) -> None:
+        dependency_type = type(dependency)
+        # TODO: Satisfy a dependency of a dependency
+        if dependency_type not in self.dependencies:
+            deps_str = "\n".join(
+                [f"{dep.__module__}.{dep.__qualname__}" for dep in self.dependencies]
+            )
+            raise TypeError(
+                f"{dependency_type.__module__}.{dependency_type.__qualname__} cannot satisfy any of the following dependencies:\n"
+                f"{deps_str}"
+            )
+
+        self._dependencies[dependency_type] = dependency
+
     @property
-    def state(self) -> typing.Union[typing.Dict[str, typing.Any], typing.Any]:
-        parallel_states: typing.Dict[str, typing.Any] = {}
+    def state(self) -> dict[str, typing.Any] | typing.Any:
+        parallel_states: dict[str, typing.Any] = {}
         for machine in self._state_machine._parallel_state_machines:
             if machine.get_model_state(self).name == "ignore":
                 continue
             parallel_states[machine.name[:-2]] = getattr(self, machine.model_attribute)
+
+        for dependency in self._dependencies.values():
+            parallel_states[dependency._state_machine.name[:-2]] = dependency.state
 
         if parallel_states:
             parallel_states[self._state_machine.name[:-2]] = self._state
