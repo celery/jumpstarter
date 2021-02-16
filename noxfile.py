@@ -82,3 +82,11 @@ def format(session: Session) -> None:
 
     session.log("Sorting pyproject.toml")
     session.run("toml-sort", "-i", "--all", "pyproject.toml")
+
+
+@session
+def lint(session: Session) -> None:
+    session.install(".")
+    session.run("poetry", "install", external=True)
+
+    session.run("flakehell", "lint", "jumpstarter/", "tests/")
