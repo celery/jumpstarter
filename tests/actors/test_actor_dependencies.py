@@ -36,7 +36,7 @@ async def test_dependency_graph():
     assert FakeActor3.dependencies == {FakeActor2}
 
 
-async def test_start_stop_dependencies():
+async def test_start_stop_dependencies(subtests):
     class FakeActor(Actor):
         ...
 
@@ -54,30 +54,32 @@ async def test_start_stop_dependencies():
 
     await fake_actor3.start()
 
-    assert fake_actor.state == ActorRunningState.healthy
-    assert fake_actor2.state == {
-        "test_start_stop_dependencies.<locals>.FakeActor": ActorRunningState.healthy,
-        "test_start_stop_dependencies.<locals>.FakeActor2": ActorRunningState.healthy,
-    }
-    assert fake_actor3.state == {
-        "test_start_stop_dependencies.<locals>.FakeActor2": {
+    with subtests.test("all dependencies are started"):
+        assert fake_actor.state == ActorRunningState.healthy
+        assert fake_actor2.state == {
             "test_start_stop_dependencies.<locals>.FakeActor": ActorRunningState.healthy,
             "test_start_stop_dependencies.<locals>.FakeActor2": ActorRunningState.healthy,
-        },
-        "test_start_stop_dependencies.<locals>.FakeActor3": ActorRunningState.healthy,
-    }
+        }
+        assert fake_actor3.state == {
+            "test_start_stop_dependencies.<locals>.FakeActor2": {
+                "test_start_stop_dependencies.<locals>.FakeActor": ActorRunningState.healthy,
+                "test_start_stop_dependencies.<locals>.FakeActor2": ActorRunningState.healthy,
+            },
+            "test_start_stop_dependencies.<locals>.FakeActor3": ActorRunningState.healthy,
+        }
 
     await fake_actor3.stop()
 
-    assert fake_actor.state == ActorState.stopped
-    assert fake_actor2.state == {
-        "test_start_stop_dependencies.<locals>.FakeActor": ActorState.stopped,
-        "test_start_stop_dependencies.<locals>.FakeActor2": ActorState.stopped,
-    }
-    assert fake_actor3.state == {
-        "test_start_stop_dependencies.<locals>.FakeActor2": {
+    with subtests.test("all dependencies are stopped"):
+        assert fake_actor.state == ActorState.stopped
+        assert fake_actor2.state == {
             "test_start_stop_dependencies.<locals>.FakeActor": ActorState.stopped,
             "test_start_stop_dependencies.<locals>.FakeActor2": ActorState.stopped,
-        },
-        "test_start_stop_dependencies.<locals>.FakeActor3": ActorState.stopped,
-    }
+        }
+        assert fake_actor3.state == {
+            "test_start_stop_dependencies.<locals>.FakeActor2": {
+                "test_start_stop_dependencies.<locals>.FakeActor": ActorState.stopped,
+                "test_start_stop_dependencies.<locals>.FakeActor2": ActorState.stopped,
+            },
+            "test_start_stop_dependencies.<locals>.FakeActor3": ActorState.stopped,
+        }
