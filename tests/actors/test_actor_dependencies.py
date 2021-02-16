@@ -1,6 +1,7 @@
 import pytest
 
 from jumpstarter import Actor
+from jumpstarter.actors import UnsatisfiedDependencyError
 from jumpstarter.states import ActorRunningState, ActorState
 
 pytestmark = pytest.mark.anyio
@@ -83,3 +84,35 @@ async def test_start_stop_dependencies(subtests):
             },
             "test_start_stop_dependencies.<locals>.FakeActor3": ActorState.stopped,
         }
+
+
+async def test_cannot_satisfy_dependency():
+    class FakeActor(Actor):
+        ...
+
+    class FakeActor2(Actor, dependencies=[FakeActor]):
+        ...
+
+    fake_actor = FakeActor2()
+
+    with pytest.raises(
+        TypeError,
+        match=r"builtins.object cannot satisfy any of the following dependencies:\n"
+        "tests.actors.test_actor_dependencies.test_cannot_satisfy_dependency.<locals>.FakeActor",
+    ):
+        fake_actor.satisfy_dependency(object())
+
+
+async def test_unsatisfied_dependency():
+    class FakeActor(Actor):
+        ...
+
+    class FakeActor2(Actor, dependencies=[FakeActor]):
+        ...
+
+    fake_actor = FakeActor2()
+
+    with pytest.raises(UnsatisfiedDependencyError) as e:
+        await fake_actor.start()
+
+    assert e.value.args[0] is FakeActor
