@@ -52,13 +52,13 @@ async def test_start_stop_dependencies():
     fake_actor3.satisfy_dependency(fake_actor2)
     fake_actor2.satisfy_dependency(fake_actor)
 
-    await fake_actor.start()
+    await fake_actor3.start()
 
     assert fake_actor.state == ActorRunningState.healthy
     assert fake_actor2.state == ActorRunningState.healthy
     assert fake_actor3.state == ActorRunningState.healthy
 
-    await fake_actor.stop()
+    await fake_actor3.stop()
 
     assert fake_actor.state == ActorState.stopped
     assert fake_actor2.state == ActorState.stopped
