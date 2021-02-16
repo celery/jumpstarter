@@ -26,6 +26,13 @@ jobs:
           ${{ runner.os }}-
     - name: Install CI dependencies
       run: pip install poetry nox nox-poetry
+    - name: Cache poetry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
     - name: Run unit tests
       run: nox -s 'test-${{ matrix.python-version }}${{matrix.extras}}'
     - uses: codecov/codecov-action@v1
