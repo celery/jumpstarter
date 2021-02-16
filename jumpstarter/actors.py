@@ -90,6 +90,16 @@ class Actor:
         def _state_machine(cls) -> ActorStateMachine:
             return cls.__state_machine[cls]
 
+        @classmethod
+        @property
+        def _global_worker_threads_capacity(cls) -> CapacityLimiter:
+            if cls.__global_worker_threads_capacity_limiter is None:
+                cls.__global_worker_threads_capacity_limiter = (
+                    anyio.create_capacity_limiter(os.cpu_count())
+                )
+
+            return cls.__global_worker_threads_capacity_limiter
+
     else:
         from jumpstarter.backports import classproperty
 
@@ -97,15 +107,14 @@ class Actor:
         def _state_machine(cls) -> ActorStateMachine:
             return cls.__state_machine[cls]
 
-    @classmethod
-    @property
-    def _global_worker_threads_capacity(cls) -> CapacityLimiter:
-        if cls.__global_worker_threads_capacity_limiter is None:
-            cls.__global_worker_threads_capacity_limiter = (
-                anyio.create_capacity_limiter(os.cpu_count())
-            )
+        @classproperty
+        def _global_worker_threads_capacity(cls) -> CapacityLimiter:
+            if cls.__global_worker_threads_capacity_limiter is None:
+                cls.__global_worker_threads_capacity_limiter = (
+                    anyio.create_capacity_limiter(os.cpu_count())
+                )
 
-        return cls.__global_worker_threads_capacity_limiter
+            return cls.__global_worker_threads_capacity_limiter
 
     # endregion
 
