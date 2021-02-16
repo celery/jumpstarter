@@ -192,11 +192,6 @@ class Actor:
         cls.__dependency_graph.add_node(cls)
 
         if dependencies:
-            dependencies: set[type] = {
-                dep
-                for dep in dependencies
-                if ancestors(cls.__dependency_graph, dep).isdisjoint(dependencies)
-            }
             invalid_dependencies: list[type] = [
                 dep for dep in dependencies if not issubclass(dep, Actor)
             ]
@@ -211,6 +206,11 @@ class Actor:
                     f"{invalid_dependencies_str}"
                 )
 
+            dependencies: set[type] = {
+                dep
+                for dep in dependencies
+                if ancestors(cls.__dependency_graph, dep).isdisjoint(dependencies)
+            }
             # Only add the dependency to the graph if it is not already a dependency of another actor
             cls.__dependency_graph.add_edges_from((cls, dep) for dep in dependencies)
 
@@ -257,6 +257,9 @@ class Actor:
             if machine.get_model_state(self).name == "ignore":
                 continue
             parallel_states[machine.name[:-2]] = getattr(self, machine.model_attribute)
+
+        for dependency in self._dependencies.values():
+            parallel_states[dependency._state_machine.name[:-2]] = dependency.state
 
         if parallel_states:
             parallel_states[self._state_machine.name[:-2]] = self._state
