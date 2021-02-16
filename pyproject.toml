@@ -12,6 +12,7 @@ name = "jumpstarter"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
+networkx = "^2.5"
 python = "^3.7.0"
 transitions = { version = "^0.8.7", extras = ['diagrams'], optional = true }
 transitions-anyio = "^0.2.0"
