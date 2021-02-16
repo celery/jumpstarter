@@ -177,10 +177,10 @@ class Actor:
         self._dependencies: dict[type, Actor] = {}
 
     def __init_subclass__(
-            cls,
-            *,
-            dependencies: typing.Iterable[type] = None,
-            actor_state: ActorState | None = ActorState,
+        cls,
+        *,
+        dependencies: typing.Iterable[type] = None,
+        actor_state: ActorState | None = ActorState,
     ):
         cls.actor_state = actor_state
 
@@ -225,8 +225,12 @@ class Actor:
                 actor_state.stopping.value.dependencies_stopped,
             )[0]
             for dep in dependencies:
-                start_dependencies_transition.before.append(partial(_start_dependency, actor_type=dep))
-                stop_dependencies_transition.before.append(partial(_stop_dependency, actor_type=dep))
+                start_dependencies_transition.before.append(
+                    partial(_start_dependency, actor_type=dep)
+                )
+                stop_dependencies_transition.before.append(
+                    partial(_stop_dependency, actor_type=dep)
+                )
 
     # endregion
 
@@ -265,7 +269,7 @@ class Actor:
         return self.__actor_id
 
     async def manage_resource_lifecycle(
-            self, resource: typing.AsyncContextManager, name: str
+        self, resource: typing.AsyncContextManager, name: str
     ) -> None:
         if self._resources.get(name, None):
             raise ResourceAlreadyExistsError(name, self._resources[name])
