@@ -1,6 +1,7 @@
 import pytest
 
 from jumpstarter import Actor
+from jumpstarter.states import ActorState, ActorRunningState
 
 pytestmark = pytest.mark.anyio
 
@@ -33,3 +34,32 @@ async def test_dependency_graph():
         ...
 
     assert FakeActor3.dependencies == {FakeActor2}
+
+
+async def test_start_stop_dependencies():
+    class FakeActor(Actor):
+        ...
+
+    class FakeActor2(Actor, dependencies=[FakeActor]):
+        ...
+
+    class FakeActor3(Actor, dependencies=[FakeActor2, FakeActor]):
+        ...
+
+    fake_actor = FakeActor()
+    fake_actor2 = FakeActor2()
+    fake_actor3 = FakeActor3()
+    fake_actor3.satisfy_dependency(fake_actor2)
+    fake_actor2.satisfy_dependency(fake_actor)
+
+    await fake_actor.start()
+
+    assert fake_actor.state == ActorRunningState.healthy
+    assert fake_actor2.state == ActorRunningState.healthy
+    assert fake_actor3.state == ActorRunningState.healthy
+
+    await fake_actor.stop()
+
+    assert fake_actor.state == ActorState.stopped
+    assert fake_actor2.state == ActorState.stopped
+    assert fake_actor3.state == ActorState.stopped
