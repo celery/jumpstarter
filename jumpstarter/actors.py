@@ -8,6 +8,7 @@ from uuid import UUID, uuid4
 
 import anyio
 from anyio.abc import CapacityLimiter
+from networkx import DiGraph, ancestors
 
 from jumpstarter.resources import (
     NotAResourceError,
@@ -80,6 +81,8 @@ class Actor:
 
     actor_state = ActorState
 
+    __dependency_graph: DiGraph = DiGraph()
+
     __global_worker_threads_capacity_limiter = None
 
     # TODO: Remove this once we drop support for Python < 3.9
@@ -100,6 +103,11 @@ class Actor:
 
             return cls.__global_worker_threads_capacity_limiter
 
+        @classmethod
+        @property
+        def dependencies(cls) -> typing.Set[typing.Type]:
+            return set(cls.__dependency_graph[cls])
+
     else:
         from jumpstarter.backports import classproperty
 
@@ -115,6 +123,10 @@ class Actor:
                 )
 
             return cls.__global_worker_threads_capacity_limiter
+
+        @classproperty
+        def dependencies(cls) -> typing.Set[typing.Type]:
+            return set(cls.__dependency_graph[cls])
 
     # endregion
 
@@ -134,13 +146,41 @@ class Actor:
         self.__actor_id = actor_id or uuid4()
 
     def __init_subclass__(
-        cls, *, actor_state: typing.Optional[ActorState] = ActorState
+        cls,
+        *,
+        dependencies: typing.Iterable[typing.Type] = None,
+        actor_state: typing.Optional[ActorState] = ActorState,
     ):
         cls.actor_state = actor_state
 
         if not issubclass(actor_state, ActorState):
             raise TypeError(
                 f"Actor states must be ActorState or a child class of it. Instead we got {actor_state.__name__}."
+            )
+
+        cls.__dependency_graph.add_node(cls)
+
+        if dependencies:
+            dependencies: typing.Set[typing.Type] = set(dependencies)
+            invalid_dependencies: typing.List[typing.Type] = [
+                dep for dep in dependencies if not issubclass(dep, Actor)
+            ]
+
+            if invalid_dependencies:
+                invalid_dependencies_str = "\n".join(
+                    f"{dep.__module__}.{dep.__qualname__}"
+                    for dep in invalid_dependencies
+                )
+                raise TypeError(
+                    "The following dependencies are not actors and therefore invalid:\n"
+                    f"{invalid_dependencies_str}"
+                )
+
+            # Only add the dependency to the graph if it is not already a dependency of another actor
+            cls.__dependency_graph.add_edges_from(
+                (cls, dep)
+                for dep in dependencies
+                if ancestors(cls.__dependency_graph, dep).isdisjoint(dependencies)
             )
 
     # endregion
