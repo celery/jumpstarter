@@ -238,8 +238,16 @@ class Actor:
 
     def satisfy_dependency(self, dependency) -> None:
         dependency_type = type(dependency)
-        # TODO: Satisfy a dependency of a dependency
         if dependency_type not in self.dependencies:
+            # Satisfy a dependency of a dependency
+            for dep in self._dependencies.values():
+                try:
+                    dep.satisfy_dependency(dependency)
+                except TypeError:
+                    pass
+                else:
+                    return
+            # Dependency not satisfied
             deps_str = "\n".join(
                 [f"{dep.__module__}.{dep.__qualname__}" for dep in self.dependencies]
             )

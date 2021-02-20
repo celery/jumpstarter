@@ -51,7 +51,7 @@ async def test_start_stop_dependencies(subtests):
     fake_actor2 = FakeActor2()
     fake_actor3 = FakeActor3()
     fake_actor3.satisfy_dependency(fake_actor2)
-    fake_actor2.satisfy_dependency(fake_actor)
+    fake_actor3.satisfy_dependency(fake_actor)
 
     await fake_actor3.start()
 
