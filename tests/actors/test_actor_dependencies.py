@@ -1,7 +1,10 @@
 import pytest
 
 from jumpstarter import Actor
-from jumpstarter.actors import UnsatisfiedDependencyError
+from jumpstarter.actors import (
+    UnsatisfiedDependencyError,
+    DependencyAlreadySatisfiedError,
+)
 from jumpstarter.states import ActorRunningState, ActorState
 
 pytestmark = pytest.mark.anyio
@@ -35,6 +38,25 @@ async def test_dependency_graph():
         ...
 
     assert FakeActor3.dependencies == {FakeActor2}
+
+
+async def test_dependency_already_satisfied():
+    class FakeActor(Actor):
+        ...
+
+    class FakeActor2(Actor, dependencies=[FakeActor]):
+        ...
+
+    fake_actor = FakeActor()
+    fake_actor2 = FakeActor2()
+
+    fake_actor2.satisfy_dependency(fake_actor)
+
+    with pytest.raises(
+        DependencyAlreadySatisfiedError,
+        match=r"tests.actors.test_actor_dependencies.test_dependency_already_satisfied.<locals>.FakeActor is already satisfied by <tests.actors.test_actor_dependencies.test_dependency_already_satisfied.<locals>.FakeActor object at 0x[0-9a-f]+>",
+    ):
+        fake_actor2.satisfy_dependency(fake_actor)
 
 
 async def test_start_stop_dependencies(subtests):

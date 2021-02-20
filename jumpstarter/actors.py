@@ -22,6 +22,7 @@ from jumpstarter.resources import (
     resource,
 )
 from jumpstarter.states import ActorState, ActorStateMachine
+from jumpstarter.utilities import fully_qualified_name
 
 
 class ActorStateMachineFactory(dict):
@@ -77,8 +78,21 @@ class ActorStateMachineFactory(dict):
         return state_machine
 
 
+# region Exceptions
+
+
 class UnsatisfiedDependencyError(TypeError):
     pass
+
+
+class DependencyAlreadySatisfiedError(TypeError):
+    def __init__(self, dependency_type: type, satisfied_dependency: Actor):
+        super().__init__(
+            f"{fully_qualified_name(dependency_type)} is already satisfied by {satisfied_dependency}"
+        )
+
+
+# endregion
 
 
 async def _start_dependency(event_data: EventData, actor_type=None) -> None:
@@ -238,6 +252,12 @@ class Actor:
 
     def satisfy_dependency(self, dependency) -> None:
         dependency_type = type(dependency)
+
+        if dependency_type in self._dependencies:
+            raise DependencyAlreadySatisfiedError(
+                dependency_type, self._dependencies[dependency_type]
+            )
+
         if dependency_type not in self.dependencies:
             # Satisfy a dependency of a dependency
             for dep in self._dependencies.values():
