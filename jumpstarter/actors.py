@@ -212,8 +212,7 @@ class Actor:
 
             if invalid_dependencies:
                 invalid_dependencies_str = "\n".join(
-                    f"{dep.__module__}.{dep.__qualname__}"
-                    for dep in invalid_dependencies
+                    fully_qualified_name(dep) for dep in invalid_dependencies
                 )
                 raise TypeError(
                     "The following dependencies are not actors and therefore invalid:\n"
@@ -267,12 +266,13 @@ class Actor:
                     pass
                 else:
                     return
+
             # Dependency not satisfied
             deps_str = "\n".join(
-                [f"{dep.__module__}.{dep.__qualname__}" for dep in self.dependencies]
+                [fully_qualified_name(dep) for dep in self.dependencies]
             )
             raise TypeError(
-                f"{dependency_type.__module__}.{dependency_type.__qualname__} cannot satisfy any of the following dependencies:\n"
+                f"{fully_qualified_name(dependency_type)} cannot satisfy any of the following dependencies:\n"
                 f"{deps_str}"
             )
 
