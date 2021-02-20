@@ -2,8 +2,8 @@ import pytest
 
 from jumpstarter import Actor
 from jumpstarter.actors import (
-    UnsatisfiedDependencyError,
     DependencyAlreadySatisfiedError,
+    UnsatisfiedDependencyError,
 )
 from jumpstarter.states import ActorRunningState, ActorState
 
