@@ -23,6 +23,8 @@ from jumpstarter.resources import (
 )
 from jumpstarter.states import ActorState, ActorStateMachine
 
+# region Actor Utilities
+
 
 class ActorStateMachineFactory(dict):
     def __missing__(self, key: type):
@@ -77,8 +79,14 @@ class ActorStateMachineFactory(dict):
         return state_machine
 
 
+# endregion
+
+
 class UnsatisfiedDependencyError(TypeError):
     pass
+
+
+# region Callbacks
 
 
 async def _start_dependency(event_data: EventData, actor_type=None) -> None:
@@ -107,8 +115,12 @@ async def _stop_dependency(event_data: EventData, actor_type=None) -> None:
         await task_group.spawn(shutdown_event.wait)
 
 
+# endregion
+
+
 class Actor:
     # region Class Attributes
+
     __state_machine: typing.ClassVar[
         ActorStateMachineFactory
     ] = ActorStateMachineFactory()
