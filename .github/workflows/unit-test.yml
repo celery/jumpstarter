@@ -1,5 +1,10 @@
 name: Unit Test
-on: [push]
+on:
+  push:
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - '.github/workflows/unit-test.yml'
 jobs:
   build:
     runs-on: ubuntu-latest
