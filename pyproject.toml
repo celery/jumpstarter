@@ -20,6 +20,8 @@ sphinx-celery = { version = "^2.0.0", optional = true }
 sphinx-pyreverse = { version = "^0.0.13", optional = true }
 transitions = { version = "^0.8.7", extras = ['diagrams'], optional = true }
 transitions-anyio = "^0.2.0"
+trio = { version = "^0.17", optional = true }
+uvloop = { version = "^0.15.2", optional = true }
 wrapt = "^1.12.1"
 
 [tool.poetry.dev-dependencies]
@@ -37,11 +39,12 @@ pytest-timeout = "^1.4.2"
 pytest-xdist = "^2.2.0"
 pyupgrade = "^2.7.4"
 toml-sort = "^0.18.0"
-trio = "^0.17"
 
 [tool.poetry.extras]
 diagrams = ["transitions"]
-readthedocs = ["sphinx-celery", "sphinx-autodoc-typehints", "sphinx-pyreverse", "pylint"]
+readthedocs = ["sphinx-celery", "sphinx-autodoc-typehints", "sphinx-pyreverse", "pylint", "trio"]
+trio = ["trio"]
+uvloop = ["uvloop"]
 
 [tool.pytest.ini_options]
 filterwarnings = [
