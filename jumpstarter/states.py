@@ -13,7 +13,6 @@ from transitions.extensions import GraphMachine
 from transitions.extensions.asyncio import NestedAsyncTransition
 from transitions.extensions.nesting import NestedState
 
-
 if TYPE_CHECKING:
     from jumpstarter.actors import Actor
 else:
