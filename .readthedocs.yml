@@ -1,7 +1,8 @@
 version: 2
 
 python:
-  - method: pip
-    path: .
-    extra_requirements:
-      - readthedocs
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - readthedocs
