@@ -15,7 +15,7 @@ def build_docs(session: Session):
 
 
 @session(python=("3.7", "3.8", "3.9"))
-@nox.parametrize("extras", [None, ("diagrams",)], ids=["none", "diagrams"])
+@nox.parametrize("extras", [("trio", "uvloop"), ("diagrams", "trio", "uvloop")], ids=["none", "diagrams"])
 def test(session: Session, extras) -> None:
     """Run the test suite."""
     if extras:
