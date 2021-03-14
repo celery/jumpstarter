@@ -40,18 +40,18 @@ class Transition(str, Enum):
         name = name.replace("__", NestedState.separator)
         return name.lower()
 
-    RESTART = auto()
-    RESTARTING__STOPPING = auto()
-    RESTARTING__STARTING = auto()
+    INITIALIZE = auto()
+    PAUSE = auto()
+    RECOVER = auto()
     REPORT_ERROR = auto()
+    REPORT_PROBLEM = auto()
+    REPORT_WARNING = auto()
+    RESTART = auto()
+    RESTARTING__STARTING = auto()
+    RESTARTING__STOPPING = auto()
+    RESUME = auto()
     START = auto()
     STOP = auto()
-    PAUSE = auto()
-    RESUME = auto()
-    RECOVER = auto()
-    REPORT_WARNING = auto()
-    REPORT_PROBLEM = auto()
-    INITIALIZE = auto()
 
 
 class Event(str, Enum):
@@ -59,8 +59,8 @@ class Event(str, Enum):
         name = name.replace("__", NestedState.separator)
         return f"{name.lower()}_event"
 
-    SHUTDOWN = auto()
     BOOTUP = auto()
+    SHUTDOWN = auto()
 
 
 # region Enums
