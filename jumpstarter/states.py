@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import anyio
 import transitions
-from anyio.abc import Event
+from anyio.abc import Event as EventType
 from transitions import EventData
 from transitions.core import _LOGGER, MachineError, listify
 from transitions.extensions import GraphMachine
@@ -32,6 +32,34 @@ else:
     diagrams = True
 
 NestedState.separator = "↦"
+
+
+class Transition(str, Enum):
+    def _generate_next_value_(name: str, *args) -> str:
+        name = name.replace("__", NestedState.separator)
+        return name.lower()
+
+    initialize = auto()
+    pause = auto()
+    recover = auto()
+    report_error = auto()
+    report_problem = auto()
+    report_warning = auto()
+    restart = auto()
+    restarting__starting = auto()
+    restarting__stopping = auto()
+    resume = auto()
+    start = auto()
+    stop = auto()
+
+
+class Event(str, Enum):
+    def _generate_next_value_(name: str, *args) -> str:
+        name = name.replace("__", NestedState.separator)
+        return f"{name.lower()}_event"
+
+    bootup = auto()
+    shutdown = auto()
 
 
 # region Enums
@@ -178,35 +206,41 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
         )
 
         self.add_transition(
-            "restart",
+            Transition.restart,
             restart_state.ignore,
             restart_state.restarting,
-            after="restart",
+            after=Transition.restart,
             conditions=self._can_restart,
         )
         self.add_transition(
-            "restart",
+            Transition.restart,
             restart_state.restarting.value.stopping,
             restart_state.restarting.value.starting,
-            after="restart",
+            after=Transition.restart,
         )
         self.add_transition(
-            "restart", restart_state.restarting.value.starting, restart_state.restarted
+            Transition.restart,
+            restart_state.restarting.value.starting,
+            restart_state.restarted,
         )
 
         self.add_transition(
-            "restart",
+            Transition.restart,
             restart_state.restarted,
             restart_state.restarting,
-            after="restart",
+            after=Transition.restart,
             conditions=self._can_restart,
         )
 
-        self.on_enter("restarting↦stopping", self._stop_and_wait_for_completion)
-        self.on_enter("restarting↦starting", self._start_and_wait_for_completion)
+        self.on_enter(
+            Transition.restarting__stopping.value, self._stop_and_wait_for_completion
+        )
+        self.on_enter(
+            Transition.restarting__starting.value, self._start_and_wait_for_completion
+        )
 
     async def _stop_and_wait_for_completion(self, event_data: EventData) -> None:
-        shutdown_event: Event = anyio.create_event()
+        shutdown_event: EventType = anyio.create_event()
 
         async with anyio.create_task_group() as task_group:
             await task_group.spawn(
@@ -215,7 +249,7 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             await task_group.spawn(shutdown_event.wait)
 
     async def _start_and_wait_for_completion(self, event_data: EventData) -> None:
-        bootup_event: Event = anyio.create_event()
+        bootup_event: EventType = anyio.create_event()
 
         async with anyio.create_task_group() as task_group:
             await task_group.spawn(
@@ -296,26 +330,34 @@ class ActorStateMachine(BaseStateMachine):
     # region Protected API
 
     def _create_crashed_transitions(self, actor_state):
-        self.add_transition("report_error", "*", actor_state.crashed)
+        self.add_transition(Transition.report_error, "*", actor_state.crashed)
         self.add_transition(
-            "stop", actor_state.crashed, actor_state.stopping, after="stop"
+            Transition.stop,
+            actor_state.crashed,
+            actor_state.stopping,
+            after=Transition.stop,
         )
         self.add_transition(
-            "start", actor_state.crashed, actor_state.starting, after="start"
+            Transition.start,
+            actor_state.crashed,
+            actor_state.starting,
+            after=Transition.start,
         )
 
     def _create_started_substates_transitions(self, actor_state):
         self.add_transition(
-            "pause", actor_state.started.value.running, actor_state.started.value.paused
+            Transition.pause,
+            actor_state.started.value.running,
+            actor_state.started.value.paused,
         )
         self.add_transition(
-            "resume",
+            Transition.resume,
             actor_state.started.value.paused,
             actor_state.started.value.running.value.healthy,
         )
 
         self.add_transition(
-            "recover",
+            Transition.recover,
             [
                 actor_state.started.value.running.value.degraded,
                 actor_state.started.value.running.value.unhealthy,
@@ -323,7 +365,7 @@ class ActorStateMachine(BaseStateMachine):
             actor_state.started.value.running.value.healthy,
         )
         self.add_transition(
-            "report_warning",
+            Transition.report_warning,
             [
                 actor_state.started.value.running.value.healthy,
                 actor_state.started.value.running.value.unhealthy,
@@ -331,7 +373,7 @@ class ActorStateMachine(BaseStateMachine):
             actor_state.started.value.running.value.degraded,
         )
         self.add_transition(
-            "report_problem",
+            Transition.report_problem,
             [
                 actor_state.started.value.running.value.degraded,
                 actor_state.started.value.running.value.healthy,
@@ -341,7 +383,10 @@ class ActorStateMachine(BaseStateMachine):
 
     def _create_restart_transitions(self, actor_state):
         self.add_transition(
-            "start", actor_state.stopped, actor_state.starting, after="start"
+            Transition.start,
+            actor_state.stopped,
+            actor_state.starting,
+            after=Transition.start,
         )
 
     def _create_shutdown_transitions(self, actor_state):
@@ -353,19 +398,19 @@ class ActorStateMachine(BaseStateMachine):
                 actor_state.stopping.value.resources_released,
                 actor_state.stopping.value.dependencies_stopped,
             ],
-            trigger="stop",
+            trigger=Transition.stop,
             loop=False,
-            after="stop",
+            after=Transition.stop,
         )
         self.add_transition(
-            "stop",
+            Transition.stop,
             actor_state.stopping.value.dependencies_stopped,
             actor_state.stopped,
-            after=partial(_maybe_set_event, event_name="shutdown_event"),
+            after=partial(_maybe_set_event, event_name=Event.shutdown),
         )
 
         transition = self.get_transitions(
-            "stop",
+            Transition.stop,
             actor_state.stopping.value.tasks_stopped,
             actor_state.stopping.value.resources_released,
         )[0]
@@ -373,7 +418,7 @@ class ActorStateMachine(BaseStateMachine):
 
     def _create_bootup_transitions(self, actor_state):
         self.add_transition(
-            "initialize", actor_state.initializing, actor_state.initialized
+            Transition.initialize, actor_state.initializing, actor_state.initialized
         )
 
         self.add_ordered_transitions(
@@ -385,15 +430,15 @@ class ActorStateMachine(BaseStateMachine):
                 actor_state.starting.value.resources_acquired,
                 actor_state.starting.value.tasks_started,
             ],
-            trigger="start",
+            trigger=Transition.start,
             loop=False,
-            after="start",
+            after=Transition.start,
         )
         self.add_transition(
-            "start",
+            Transition.start,
             actor_state.starting.value.tasks_started,
             actor_state.started,
-            after=partial(_maybe_set_event, event_name="bootup_event"),
+            after=partial(_maybe_set_event, event_name=Event.bootup),
         )
 
     # endregion
@@ -409,7 +454,7 @@ async def _release_resources(event_data: transitions.EventData) -> None:
 async def _maybe_set_event(event_data: EventData, event_name: str) -> None:
     kwargs = _merge_event_data_kwargs(event_data)
     try:
-        event: Event = kwargs[event_name]
+        event: EventType = kwargs[event_name]
         await event.set()
     except KeyError:
         pass
