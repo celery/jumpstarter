@@ -2,6 +2,7 @@ import pytest
 from transitions import MachineError
 
 from jumpstarter.states import (
+    ActorRestartingState,
     ActorRestartState,
     ActorRestartStateMachine,
     ActorRunningState,
@@ -110,3 +111,33 @@ async def test_can_restart_twice(
             ]
         )
     model.m.reset_mock()
+
+
+@pytest.mark.parametrize("state", [state for state in ActorRestartState])
+async def test_abort_restart(state, state_machine, model):
+    state_machine.set_state(state)
+
+    await model.abort_restart()
+    assert model._restart_state == ActorRestartState.ignore
+
+
+restart_states_excluding_ignore = [
+    state for state in ActorRestartState if state != state.ignore
+] + [state for state in ActorRestartingState]
+
+
+@pytest.mark.parametrize("state", restart_states_excluding_ignore)
+async def test_restart_during_crash(state, state_machine, actor_state_machine, model):
+    class ExpectedException(Exception):
+        ...
+
+    getattr(
+        model.m, "_".join(state_machine._get_enum_path(state))
+    ).side_effect = ExpectedException
+    actor_state_machine.set_state(ActorRunningState.healthy)
+
+    with pytest.raises(ExpectedException):
+        await model.restart()
+
+    assert model._state == ActorState.crashed
+    assert model._restart_state == ActorRestartState.ignore
