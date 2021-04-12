@@ -8,5 +8,8 @@ pytestmark = pytest.mark.anyio
 
 @pytest.mark.skipif(not diagrams, reason="pygraphviz is not installed")
 async def test_draw_state_machine_diagram():
-    actor = Actor()
+    class FakeActor(Actor):
+        ...
+
+    actor = FakeActor()
     actor.draw_state_machine_graph("state_machine.png")

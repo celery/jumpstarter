@@ -1,3 +1,4 @@
+import gc
 import logging
 from uuid import UUID
 
@@ -33,6 +34,20 @@ async def test_actor_id_is_set():
 
     assert fake_actor.actor_id == "fake_actor"
     assert isinstance(fake_actor.actor_id, str)
+
+
+async def test_actor_model_cleanup():
+    class FakeActor(Actor):
+        ...
+
+    fake_actor = FakeActor(actor_id="fake_actor")
+
+    state_machine = fake_actor._state_machine
+    assert state_machine.models == [state_machine, fake_actor]
+    del fake_actor
+    gc.collect()
+
+    assert state_machine.models == [state_machine]
 
 
 async def test_actor_can_transition_back_to_starting_after_stopped():

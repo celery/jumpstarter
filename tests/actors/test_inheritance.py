@@ -62,6 +62,18 @@ async def test_resource_inheritance():
     ]
 
 
+async def test_child_actor_does_not_copy_models():
+    class ParentFakeActor(Actor):
+        ...
+
+    ParentFakeActor()
+
+    class ChildFakeActor(ParentFakeActor):
+        ...
+
+    assert ChildFakeActor._state_machine.models == [ChildFakeActor._state_machine]
+
+
 async def test_actor_state_must_be_of_the_correct_type():
     with pytest.raises(
         TypeError,
