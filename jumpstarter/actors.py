@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import itertools
 import os
 import sys
 import typing
+import weakref
 from collections import defaultdict
 from contextlib import AsyncExitStack
 from copy import deepcopy
@@ -30,7 +32,7 @@ class ActorStateMachineFactory(dict):
     def __missing__(self, key: type):
         # We can't check for actor type during module initialization
         # so we check if the Actor class is already defined instead.
-        # If it's not, we simply assume that this is the state machine for the Actor class.
+        # If it's not, we simply assume that this is the state state_machine_template for the Actor class.
         try:
             Actor
         except NameError:
@@ -67,11 +69,29 @@ class ActorStateMachineFactory(dict):
                 "Using a different actor state is currently unsupported."
             )
 
-        # We must deepcopy here or otherwise transitions copies the state machine's callbacks by **reference**
+        # We must deepcopy here or otherwise transitions copies
+        # the state state_machine_template's callbacks by **reference**.
         # This results in callbacks registered in one actor ending up in another.
-        # TODO: Remove the deepcopy once https://github.com/pytransitions/transitions/issues/509 is resolved
+
+        state_machine_template = actor_base_class._state_machine
+
+        # When deepcopying the state machine template, ignore all of the
+        # state machine's models (including the models of the parallel state machines) since:
+        # * The newly inherited state machine does not inherit the parent's models.
+        # * The newly deepcopied state machine's constructor reinitilaizes the models attribute anyway.
+        # * Attempting to copy an empty weak reference results in a ReferenceError.
+        memo = {
+            id(state_machine_template.models): [],
+            **{
+                models_ref_id: []
+                for models_ref_id in itertools.chain(
+                    id(machine.models)
+                    for machine in state_machine_template._parallel_state_machines
+                )
+            },
+        }
         state_machine: ActorStateMachine = ActorStateMachine(
-            actor_state=deepcopy(actor_base_class._state_machine),
+            actor_state=deepcopy(state_machine_template, memo),
             inherited=True,
             name=key.__qualname__,
         )
@@ -180,7 +200,30 @@ class Actor:
 
     def __init__(self, *, actor_id: str | UUID | None = None) -> None:
         cls: type = type(self)
-        cls._state_machine.add_model(self)
+
+        state_machine = cls._state_machine
+
+        def finalize_model(proxy):
+            # this is a hack to compare the proxy object by identity
+            # rather than by equality since models.remove(proxy)
+            # triggers a ReferenceError on empty weak references.
+            for i, model in enumerate(state_machine.models):
+                if model is proxy:
+                    del state_machine.models[i]
+                    if len(state_machine._transition_queue) > 0:
+                        queue = state_machine._transition_queue
+                        new_queue = [queue.popleft()] + [
+                            e for e in queue if e.args[0] is not model
+                        ]
+                        state_machine._transition_queue.clear()
+                        state_machine._transition_queue.extend(new_queue)
+                    break
+
+        # TODO: Figure out why transitions raises a ReferenceError
+        #  when we remove a model from the list
+        #  proxy = weakref.proxy(self, cls._state_machine.remove_model)
+        proxy = weakref.proxy(self, finalize_model)
+        state_machine.add_model(proxy)
 
         self._exit_stack: AsyncExitStack = AsyncExitStack()
 
