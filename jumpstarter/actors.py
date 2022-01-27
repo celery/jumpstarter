@@ -143,8 +143,8 @@ class Actor:
         @property
         def _global_worker_threads_capacity(cls) -> CapacityLimiter:
             if cls.__global_worker_threads_capacity_limiter is None:
-                cls.__global_worker_threads_capacity_limiter = (
-                    anyio.CapacityLimiter(os.cpu_count())
+                cls.__global_worker_threads_capacity_limiter = anyio.CapacityLimiter(
+                    os.cpu_count()
                 )
 
             return cls.__global_worker_threads_capacity_limiter
@@ -164,8 +164,8 @@ class Actor:
         @classproperty
         def _global_worker_threads_capacity(cls) -> CapacityLimiter:
             if cls.__global_worker_threads_capacity_limiter is None:
-                cls.__global_worker_threads_capacity_limiter = (
-                    anyio.CapacityLimiter(os.cpu_count())
+                cls.__global_worker_threads_capacity_limiter = anyio.CapacityLimiter(
+                    os.cpu_count()
                 )
 
             return cls.__global_worker_threads_capacity_limiter
