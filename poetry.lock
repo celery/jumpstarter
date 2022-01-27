@@ -8,7 +8,7 @@ python-versions = "*"
 
 [[package]]
 name = "anyio"
-version = "2.2.0"
+version = "3.5.0"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
 category = "main"
 optional = false
@@ -20,9 +20,8 @@ sniffio = ">=1.1"
 typing-extensions = {version = "*", markers = "python_version < \"3.8\""}
 
 [package.extras]
-curio = ["curio (>=1.4)"]
-doc = ["sphinx-rtd-theme", "sphinx-autodoc-typehints (>=1.2.0)"]
-test = ["coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "pytest (>=6.0)", "trustme", "uvloop (<0.15)", "uvloop (>=0.15)"]
+doc = ["packaging", "sphinx-rtd-theme", "sphinx-autodoc-typehints (>=1.2.0)"]
+test = ["coverage[toml] (>=4.5)", "hypothesis (>=4.0)", "pytest (>=6.0)", "pytest-mock (>=3.6.1)", "trustme", "contextlib2", "uvloop (<0.15)", "mock (>=4)", "uvloop (>=0.15)"]
 trio = ["trio (>=0.16)"]
 
 [[package]]
@@ -902,14 +901,14 @@ test = ["pytest"]
 
 [[package]]
 name = "transitions-anyio"
-version = "0.2.0"
+version = "0.3.0"
 description = "An extension for the transitions state machine library which runs asynchronous state machines using anyio."
 category = "main"
 optional = false
-python-versions = ">=3.6.2,<4.0.0"
+python-versions = ">=3.7.1,<4.0.0"
 
 [package.dependencies]
-anyio = ">=2.0.2,<3.0.0"
+anyio = ">=3,<4"
 transitions = ">=0.8.6,<0.9.0"
 
 [[package]]
@@ -1011,8 +1010,8 @@ uvloop = ["uvloop"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.7.0"
-content-hash = "a342a1204b2641bcfd299713e098065658f5c601134d8a7b1fdac6841dcbf8ca"
+python-versions = "^3.7.1"
+content-hash = "2050d903e84ef79d16e10d6b812fd08fc8ae02bc1a5e73f0819c78ab246abcc6"
 
 [metadata.files]
 alabaster = [
@@ -1020,8 +1019,8 @@ alabaster = [
     {file = "alabaster-0.7.12.tar.gz", hash = "sha256:a661d72d58e6ea8a57f7a86e37d86716863ee5e92788398526d58b26a4e4dc02"},
 ]
 anyio = [
-    {file = "anyio-2.2.0-py3-none-any.whl", hash = "sha256:aa3da546ed17f097ca876c78024dea380a3b7fa80759abfdda59f12176a3dac8"},
-    {file = "anyio-2.2.0.tar.gz", hash = "sha256:4a41c5b3a65ed92e469d51b6fba3779301850ea2e352afcf9e36c46f21ee14a9"},
+    {file = "anyio-3.5.0-py3-none-any.whl", hash = "sha256:b5fa16c5ff93fa1046f2eeb5bbff2dad4d3514d6cda61d02816dba34fa8c3c2e"},
+    {file = "anyio-3.5.0.tar.gz", hash = "sha256:a0aeffe2fb1fdf374a8e4b471444f0f3ac4fb9f5a5b542b48824475e0042a5a6"},
 ]
 appdirs = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
@@ -1642,8 +1641,8 @@ transitions = [
     {file = "transitions-0.8.10.tar.gz", hash = "sha256:b0385975a842e885c1a55c719d2f90164471665794d39d51f9eb3f11e1d9c8ac"},
 ]
 transitions-anyio = [
-    {file = "transitions-anyio-0.2.0.tar.gz", hash = "sha256:376cf4f1640bf08376db542a9c4aaf5760adf177d5008db0fd6078b370fe11f4"},
-    {file = "transitions_anyio-0.2.0-py3-none-any.whl", hash = "sha256:98fc7065a3ca2e31c7a301128f0e0d81dab08029f4380da6b8eb6c14920b4ea0"},
+    {file = "transitions-anyio-0.3.0.tar.gz", hash = "sha256:3f6c30f486301a98839174ce39c327251f8f6f968657c561a9e605b318f322bb"},
+    {file = "transitions_anyio-0.3.0-py3-none-any.whl", hash = "sha256:38bf78e9547002c040056be036a2c60a5f67b2133abf714f3d550a001741b71f"},
 ]
 trio = [
     {file = "trio-0.17.0-py3-none-any.whl", hash = "sha256:fc70c74e8736d1105b3c05cc2e49b30c58755733740f9c51ae6d88a4d6d0a291"},
