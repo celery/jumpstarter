@@ -179,6 +179,9 @@ category = "dev"
 optional = false
 python-versions = ">=3.7"
 
+[package.dependencies]
+tomli = {version = "*", optional = true, markers = "extra == \"toml\""}
+
 [package.extras]
 toml = ["tomli"]
 
@@ -507,16 +510,15 @@ testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xm
 
 [[package]]
 name = "pytest-cov"
-version = "2.12.1"
+version = "3.0.0"
 description = "Pytest plugin for measuring coverage."
 category = "dev"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.6"
 
 [package.dependencies]
-coverage = ">=5.2.1"
+coverage = {version = ">=5.2.1", extras = ["toml"]}
 pytest = ">=4.6"
-toml = "*"
 
 [package.extras]
 testing = ["fields", "hunter", "process-tests", "six", "pytest-xdist", "virtualenv"]
@@ -570,25 +572,25 @@ pytest = "*"
 
 [[package]]
 name = "pytest-subtests"
-version = "0.3.2"
+version = "0.6.0"
 description = "unittest subTest() support and subtests fixture"
 category = "dev"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 
 [package.dependencies]
-pytest = ">=4.4.0"
+pytest = ">=6.0"
 
 [[package]]
 name = "pytest-timeout"
-version = "1.4.2"
-description = "py.test plugin to abort hanging tests"
+version = "2.1.0"
+description = "pytest plugin to abort hanging tests"
 category = "dev"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.dependencies]
-pytest = ">=3.6.0"
+pytest = ">=5.0.0"
 
 [[package]]
 name = "pytest-xdist"
@@ -881,6 +883,14 @@ python-versions = ">=3.6,<4.0"
 [package.dependencies]
 click = ">=7.0"
 tomlkit = ">=0.5.8"
+
+[[package]]
+name = "tomli"
+version = "2.0.0"
+description = "A lil' TOML parser"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
 
 [[package]]
 name = "tomlkit"
@@ -1413,8 +1423,8 @@ pytest = [
     {file = "pytest-6.2.5.tar.gz", hash = "sha256:131b36680866a76e6781d13f101efb86cf674ebb9762eb70d3082b6f29889e89"},
 ]
 pytest-cov = [
-    {file = "pytest-cov-2.12.1.tar.gz", hash = "sha256:261ceeb8c227b726249b376b8526b600f38667ee314f910353fa318caa01f4d7"},
-    {file = "pytest_cov-2.12.1-py2.py3-none-any.whl", hash = "sha256:261bb9e47e65bd099c89c3edf92972865210c36813f80ede5277dceb77a4a62a"},
+    {file = "pytest-cov-3.0.0.tar.gz", hash = "sha256:e7f0f5b1617d2210a2cabc266dfe2f4c75a8d32fb89eafb7ad9d06f6d076d470"},
+    {file = "pytest_cov-3.0.0-py3-none-any.whl", hash = "sha256:578d5d15ac4a25e5f961c938b85a05b09fdaae9deef3bb6de9a6e766622ca7a6"},
 ]
 pytest-forked = [
     {file = "pytest-forked-1.4.0.tar.gz", hash = "sha256:8b67587c8f98cbbadfdd804539ed5455b6ed03802203485dd2f53c1422d7440e"},
@@ -1432,12 +1442,12 @@ pytest-randomly = [
     {file = "pytest_randomly-3.11.0-py3-none-any.whl", hash = "sha256:a3c680d2b8150cf766311a80a1f92da64c3dd819045cda834fbf1b0ac4891610"},
 ]
 pytest-subtests = [
-    {file = "pytest-subtests-0.3.2.tar.gz", hash = "sha256:677281a196092c06d3da8e6408f0c1362b3f7b180e3c0e9113c7209b6b48afd7"},
-    {file = "pytest_subtests-0.3.2-py3-none-any.whl", hash = "sha256:ec2634b303339dc4582912fb7bd669627f2cc20b23fc277f1076b3cc69a9eb9e"},
+    {file = "pytest-subtests-0.6.0.tar.gz", hash = "sha256:3ebd306a8dcf75133f1742f288c82f36426ebcf8a132d4ee89782d20e84fc13a"},
+    {file = "pytest_subtests-0.6.0-py3-none-any.whl", hash = "sha256:fb2fe6f95a80003c70055226077c784f40bc31f1994c3e2a99d5668f16730db6"},
 ]
 pytest-timeout = [
-    {file = "pytest-timeout-1.4.2.tar.gz", hash = "sha256:20b3113cf6e4e80ce2d403b6fb56e9e1b871b510259206d40ff8d609f48bda76"},
-    {file = "pytest_timeout-1.4.2-py2.py3-none-any.whl", hash = "sha256:541d7aa19b9a6b4e475c759fd6073ef43d7cdc9a92d95644c260076eb257a063"},
+    {file = "pytest-timeout-2.1.0.tar.gz", hash = "sha256:c07ca07404c612f8abbe22294b23c368e2e5104b521c1790195561f37e1ac3d9"},
+    {file = "pytest_timeout-2.1.0-py3-none-any.whl", hash = "sha256:f6f50101443ce70ad325ceb4473c4255e9d74e3c7cd0ef827309dfa4c0d975c6"},
 ]
 pytest-xdist = [
     {file = "pytest-xdist-2.5.0.tar.gz", hash = "sha256:4580deca3ff04ddb2ac53eba39d76cb5dd5edeac050cb6fbc768b0dd712b4edf"},
@@ -1637,6 +1647,10 @@ toml = [
 toml-sort = [
     {file = "toml-sort-0.18.0.tar.gz", hash = "sha256:93c8ba23c540f9029d20b4a3d6b9ec650fc32d1586d701939e6614390820b3f0"},
     {file = "toml_sort-0.18.0-py3-none-any.whl", hash = "sha256:9bb460111e2d9e275c4b80ebbc57b4153d4cd24d0ac1d875126d6f86e032da13"},
+]
+tomli = [
+    {file = "tomli-2.0.0-py3-none-any.whl", hash = "sha256:b5bde28da1fed24b9bd1d4d2b8cba62300bfb4ec9a6187a957e8ddb9434c5224"},
+    {file = "tomli-2.0.0.tar.gz", hash = "sha256:c292c34f58502a1eb2bbb9f5bbc9a5ebc37bee10ffb8c2d6bbdfa8eb13cc14e1"},
 ]
 tomlkit = [
     {file = "tomlkit-0.8.0-py3-none-any.whl", hash = "sha256:b824e3466f1d475b2b5f1c392954c6cb7ea04d64354ff7300dc7c14257dc85db"},
