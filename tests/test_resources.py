@@ -12,7 +12,7 @@ async def test_threaded_context_manager(subtests):
     context_manager.__enter__.return_value = sentinel.RETURN_VALUE
 
     threaded_context_manager = ThreadedContextManager(
-        context_manager, anyio.create_capacity_limiter(1)
+        context_manager, anyio.CapacityLimiter(1)
     )
 
     with subtests.test("threaded context manager is proxied"):
@@ -37,7 +37,7 @@ async def test_threaded_context_manager_raises_exception(subtests):
     context_manager.__enter__.side_effect = ExpectedException
 
     threaded_context_manager = ThreadedContextManager(
-        context_manager, anyio.create_capacity_limiter(1)
+        context_manager, anyio.CapacityLimiter(1)
     )
 
     with subtests.test("exception is raised from __enter__"):

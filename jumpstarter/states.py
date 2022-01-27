@@ -206,22 +206,22 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
         self.on_enter("restarting↦starting", self._start_and_wait_for_completion)
 
     async def _stop_and_wait_for_completion(self, event_data: EventData) -> None:
-        shutdown_event: Event = anyio.create_event()
+        shutdown_event: Event = anyio.Event()
 
         async with anyio.create_task_group() as task_group:
-            await task_group.spawn(
+            task_group.start_soon(
                 partial(event_data.model.stop, shutdown_event=shutdown_event)
             )
-            await task_group.spawn(shutdown_event.wait)
+            task_group.start_soon(shutdown_event.wait)
 
     async def _start_and_wait_for_completion(self, event_data: EventData) -> None:
-        bootup_event: Event = anyio.create_event()
+        bootup_event: Event = anyio.Event()
 
         async with anyio.create_task_group() as task_group:
-            await task_group.spawn(
+            task_group.start_soon(
                 partial(event_data.model.start, bootup_event=bootup_event)
             )
-            await task_group.spawn(bootup_event.wait)
+            task_group.start_soon(bootup_event.wait)
 
     def _can_restart(self, event_data: EventData) -> bool:
         if event_data.model._state in self.restart_allowed_from:
@@ -410,7 +410,7 @@ async def _maybe_set_event(event_data: EventData, event_name: str) -> None:
     kwargs = _merge_event_data_kwargs(event_data)
     try:
         event: Event = kwargs[event_name]
-        await event.set()
+        event.set()
     except KeyError:
         pass
 

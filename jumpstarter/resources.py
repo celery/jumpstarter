@@ -71,7 +71,7 @@ class Resource:
                         f"You should either remove the timeout keyword argument from the definition of {name} or replace it with an asynchronous resource."
                     )
 
-                async with anyio.fail_after(self._timeout):
+                with anyio.fail_after(self._timeout):
                     await self_.manage_resource_lifecycle(resource, name)
 
         else:
@@ -115,12 +115,12 @@ class ThreadedContextManager(ObjectProxy):
         self._capacity_limiter = capacity_limiter
 
     async def __aenter__(self) -> typing.Any:
-        return await anyio.run_sync_in_worker_thread(
+        return await anyio.to_thread.run_sync(
             self.__wrapped__.__enter__, limiter=self._capacity_limiter
         )
 
     async def __aexit__(self, *exc_info) -> bool | None:
-        return await anyio.run_sync_in_worker_thread(
+        return await anyio.to_thread.run_sync(
             self.__wrapped__.__exit__, *exc_info, limiter=self._capacity_limiter
         )
 

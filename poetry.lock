@@ -930,11 +930,12 @@ transitions = ">=0.8.6,<0.9.0"
 
 [[package]]
 name = "trio"
-version = "0.17.0"
+version = "0.19.0+dev"
 description = "A friendly Python library for async concurrency and I/O"
 category = "main"
 optional = true
-python-versions = ">=3.6"
+python-versions = ">=3.7"
+develop = false
 
 [package.dependencies]
 async-generator = ">=1.9"
@@ -944,6 +945,12 @@ idna = "*"
 outcome = "*"
 sniffio = "*"
 sortedcontainers = "*"
+
+[package.source]
+type = "git"
+url = "git@github.com:python-trio/trio.git"
+reference = "master"
+resolved_reference = "7dc2bd98640809ca8c6261e206e276b5237484e0"
 
 [[package]]
 name = "typed-ast"
@@ -1028,7 +1035,7 @@ uvloop = ["uvloop"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "9fdf74a7d680738651d95576ede5d3cff336da5d649b8e644b98aadb11e32fe6"
+content-hash = "c54f29abf5777764b0d6b17b584e9f443e66cec69447a36b0564d0f435b21477"
 
 [metadata.files]
 alabaster = [
@@ -1664,10 +1671,7 @@ transitions-anyio = [
     {file = "transitions-anyio-0.3.0.tar.gz", hash = "sha256:3f6c30f486301a98839174ce39c327251f8f6f968657c561a9e605b318f322bb"},
     {file = "transitions_anyio-0.3.0-py3-none-any.whl", hash = "sha256:38bf78e9547002c040056be036a2c60a5f67b2133abf714f3d550a001741b71f"},
 ]
-trio = [
-    {file = "trio-0.17.0-py3-none-any.whl", hash = "sha256:fc70c74e8736d1105b3c05cc2e49b30c58755733740f9c51ae6d88a4d6d0a291"},
-    {file = "trio-0.17.0.tar.gz", hash = "sha256:e85cf9858e445465dfbb0e3fdf36efe92082d2df87bfe9d62585eedd6e8e9d7d"},
-]
+trio = []
 typed-ast = [
     {file = "typed_ast-1.5.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:183b183b7771a508395d2cbffd6db67d6ad52958a5fdc99f450d954003900266"},
     {file = "typed_ast-1.5.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:676d051b1da67a852c0447621fdd11c4e104827417bf216092ec3e286f7da596"},

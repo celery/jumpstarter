@@ -1,7 +1,7 @@
 import glob
 
 import nox
-from nox_poetry import Session, session
+from nox import Session, session
 
 
 @session

@@ -95,11 +95,11 @@ async def _start_dependency(event_data: EventData, actor_type=None) -> None:
     except KeyError:
         raise UnsatisfiedDependencyError(actor_type)
 
-    bootup_event = anyio.create_event()
+    bootup_event = anyio.Event()
 
     async with anyio.create_task_group() as task_group:
-        await task_group.spawn(partial(actor.start, bootup_event=bootup_event))
-        await task_group.spawn(bootup_event.wait)
+        task_group.start_soon(partial(actor.start, bootup_event=bootup_event))
+        task_group.start_soon(bootup_event.wait)
 
 
 async def _stop_dependency(event_data: EventData, actor_type=None) -> None:
@@ -108,11 +108,11 @@ async def _stop_dependency(event_data: EventData, actor_type=None) -> None:
     except KeyError:
         raise UnsatisfiedDependencyError(actor_type)
 
-    shutdown_event = anyio.create_event()
+    shutdown_event = anyio.Event()
 
     async with anyio.create_task_group() as task_group:
-        await task_group.spawn(partial(actor.stop, shutdown_event=shutdown_event))
-        await task_group.spawn(shutdown_event.wait)
+        task_group.start_soon(partial(actor.stop, shutdown_event=shutdown_event))
+        task_group.start_soon(shutdown_event.wait)
 
 
 # endregion
@@ -144,7 +144,7 @@ class Actor:
         def _global_worker_threads_capacity(cls) -> CapacityLimiter:
             if cls.__global_worker_threads_capacity_limiter is None:
                 cls.__global_worker_threads_capacity_limiter = (
-                    anyio.create_capacity_limiter(os.cpu_count())
+                    anyio.CapacityLimiter(os.cpu_count())
                 )
 
             return cls.__global_worker_threads_capacity_limiter
@@ -165,7 +165,7 @@ class Actor:
         def _global_worker_threads_capacity(cls) -> CapacityLimiter:
             if cls.__global_worker_threads_capacity_limiter is None:
                 cls.__global_worker_threads_capacity_limiter = (
-                    anyio.create_capacity_limiter(os.cpu_count())
+                    anyio.CapacityLimiter(os.cpu_count())
                 )
 
             return cls.__global_worker_threads_capacity_limiter
@@ -308,7 +308,7 @@ class Actor:
 
     @resource
     def cancel_scope(self):
-        return anyio.open_cancel_scope()
+        return anyio.maybe_async_cm(anyio.CancelScope())
 
     # endregion
 
