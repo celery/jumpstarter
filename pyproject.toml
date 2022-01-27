@@ -17,7 +17,7 @@ pylint = { version = "^2.6.0", optional = true }
 python = "^3.7.1"
 sphinx-autodoc-typehints = { version = "^1.11.1", optional = true }
 sphinx-celery = { version = "^2.0.0", optional = true }
-sphinx-pyreverse = { version = "^0.0.13", optional = true }
+sphinx-pyreverse = { version = "^0.0.17", optional = true }
 transitions = { version = "^0.8.10", extras = ['diagrams'], optional = true }
 transitions-anyio = "^0.3.0"
 trio = { version = "^0.17", optional = true }

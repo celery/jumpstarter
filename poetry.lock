@@ -766,15 +766,22 @@ Sphinx = ">=2.0.0"
 
 [[package]]
 name = "sphinx-pyreverse"
-version = "0.0.13"
+version = "0.0.17"
 description = "A simple sphinx extension to generate UML diagrams with pyreverse"
 category = "main"
 optional = true
 python-versions = "*"
 
 [package.dependencies]
+astroid = ">=2.5.7"
 docutils = "*"
+pylint = "*"
 sphinx = "*"
+
+[package.extras]
+deploy = ["twine"]
+pil = ["pillow"]
+tests = ["black (==21.6b0)", "docutils", "flake8", "isort (==5.8.0)", "pytest", "pytest-cov", "sphinx"]
 
 [[package]]
 name = "sphinxcontrib-applehelp"
@@ -1011,7 +1018,7 @@ uvloop = ["uvloop"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "2050d903e84ef79d16e10d6b812fd08fc8ae02bc1a5e73f0819c78ab246abcc6"
+content-hash = "9fdf74a7d680738651d95576ede5d3cff336da5d649b8e644b98aadb11e32fe6"
 
 [metadata.files]
 alabaster = [
@@ -1592,9 +1599,8 @@ sphinx-celery = [
     {file = "sphinx_celery-2.0.0.tar.gz", hash = "sha256:d8e440b5b0c3bb015a3404586bcec4f1a3e9aaee9fa0073511c32c8d4cd3d3dd"},
 ]
 sphinx-pyreverse = [
-    {file = "sphinx-pyreverse-0.0.13.tar.gz", hash = "sha256:3b6d373c4981b5d3495355ddd4c4d13d59cb1795b520a88c3f987640ac8c3b4c"},
-    {file = "sphinx_pyreverse-0.0.13-py2-none-any.whl", hash = "sha256:b0641bb82ed287cf0e263f9109cd8b30e3a513fa79011d9f2738ad1ed795405d"},
-    {file = "sphinx_pyreverse-0.0.13-py3-none-any.whl", hash = "sha256:b6152686795c2ed27f3bba2504d6d914a2483b3901cda9912037025d502992f8"},
+    {file = "sphinx-pyreverse-0.0.17.tar.gz", hash = "sha256:b32b9e618be7a9f6d3910b95faacc0346fc2bf1e2971f848e36eb44b1f813cf7"},
+    {file = "sphinx_pyreverse-0.0.17-py3-none-any.whl", hash = "sha256:a98aaceaeb75684ff36df9e2691b6cffa8bd24678f32f9ad8278593ea690008d"},
 ]
 sphinxcontrib-applehelp = [
     {file = "sphinxcontrib-applehelp-1.0.2.tar.gz", hash = "sha256:a072735ec80e7675e3f432fcae8610ecf509c5f1869d17e2eecff44389cdbc58"},
