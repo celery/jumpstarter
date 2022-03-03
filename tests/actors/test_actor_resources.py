@@ -97,6 +97,8 @@ async def test_acquire_async_resource_timed_out(subtests):
         async with anyio.create_task_group() as tg:
             await fake_actor.start(tg)
 
+    assert fake_actor.state == ActorState.crashed
+
 
 async def test_acquire_sync_resource_timeout_not_supported(subtests):
     resource_mock = MagicMock()
@@ -114,6 +116,8 @@ async def test_acquire_sync_resource_timeout_not_supported(subtests):
         async with anyio.create_task_group() as tg:
             await fake_actor.start(tg)
 
+    assert fake_actor.state == ActorState.crashed
+
 
 async def test_acquire_resource_not_a_resource(subtests):
     class FakeActorWithAFaultyResource(Actor):
@@ -130,6 +134,8 @@ async def test_acquire_resource_not_a_resource(subtests):
     ):
         await a.start()
 
+    assert a.state == ActorState.crashed
+
 
 async def test_acquire_resource_within_specified_timeout_not_a_resource(subtests):
     class FakeActorWithAFaultyResource(Actor):
@@ -145,6 +151,8 @@ async def test_acquire_resource_within_specified_timeout_not_a_resource(subtests
         r"Instead we got <object object at 0x[0-9a-f]+>\.",
     ):
         await a.start()
+
+    assert a.state == ActorState.crashed
 
 
 async def test_resource_is_immutable():

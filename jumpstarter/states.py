@@ -5,7 +5,6 @@ from functools import partial
 from typing import TYPE_CHECKING, Any
 
 import anyio
-import transitions
 from anyio.abc import Event
 from transitions import EventData
 from transitions.core import _LOGGER, MachineError, listify
@@ -175,6 +174,7 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             send_event=True,
             queued=True,
             name="Restart",
+            finalize_event=_crash_if_an_error_occurred,
         )
 
         self.add_transition(
@@ -201,6 +201,8 @@ class ActorRestartStateMachine(HierarchicalParallelAnyIOGraphMachine):
             after="restart",
             conditions=self._can_restart,
         )
+
+        self.add_transition("abort_restart", "*", restart_state.ignore)
 
         self.on_enter("restarting↦stopping", self._stop_and_wait_for_completion)
         self.on_enter("restarting↦starting", self._start_and_wait_for_completion)
@@ -256,8 +258,8 @@ class ActorStateMachine(BaseStateMachine):
                 auto_transitions=False,
                 send_event=True,
                 name=name,
-                # queued=True,
                 model_attribute="_state",
+                finalize_event=_crash_if_an_error_occurred,
             )
         else:
             super().__init__(
@@ -266,8 +268,8 @@ class ActorStateMachine(BaseStateMachine):
                 auto_transitions=False,
                 send_event=True,
                 name=name,
-                # queued=True,
                 model_attribute="_state",
+                finalize_event=_crash_if_an_error_occurred,
             )
 
             self._create_bootup_transitions(actor_state)
@@ -402,7 +404,7 @@ class ActorStateMachine(BaseStateMachine):
 # endregion
 
 
-async def _release_resources(event_data: transitions.EventData) -> None:
+async def _release_resources(event_data: EventData) -> None:
     await event_data.model._exit_stack.aclose()
 
 
@@ -413,6 +415,24 @@ async def _maybe_set_event(event_data: EventData, event_name: str) -> None:
         event.set()
     except KeyError:
         pass
+
+
+async def _crash_if_an_error_occurred(event_data: EventData) -> None:
+    error = event_data.error
+    if error:
+        if event_data.state.value != ActorState.crashed:
+            try:
+                model = event_data.model
+
+                async with anyio.create_task_group() as task_group:
+                    await task_group.spawn(model.abort_restart, error)
+                    await task_group.spawn(model.report_error, error)
+            except Exception:
+                # TODO: Log this
+                pass
+        else:
+            # TODO: Log this
+            pass
 
 
 def _merge_event_data_kwargs(event_data: EventData) -> dict:
