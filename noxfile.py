@@ -14,7 +14,7 @@ def build_docs(session: Session):
     )
 
 
-@session(python=("3.7", "3.8", "3.9"))
+@session(python=("3.8", "3.9", "3.9", "3.10", "3.11", "3.12"))
 @nox.parametrize(
     "extras",
     [("trio", "uvloop"), ("diagrams", "trio", "uvloop")],
