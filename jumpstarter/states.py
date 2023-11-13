@@ -144,7 +144,6 @@ if diagrams:
     ):
         transition_cls = NestedAsyncTransition
 
-
 else:
     HierarchicalParallelAnyIOGraphMachine = BaseStateMachine
 
