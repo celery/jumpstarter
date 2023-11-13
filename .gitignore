@@ -140,3 +140,9 @@ dmypy.json
 cython_debug/
 
 .idea/
+
+# MonkeyType
+*.sqlite3
+
+# Test Suite
+state_machine.png

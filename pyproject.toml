@@ -1,25 +1,53 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+
+[tool.isort]
+profile = "black"
 
 [tool.poetry]
+authors = ["Omer Katz <omer.drow@gmail.com>"]
+description = ""
 name = "jumpstarter"
 version = "0.1.0"
-description = ""
-authors = ["Omer Katz <omer.drow@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7.0"
-transitions-anyio = "^0.1.0"
-sphinx-celery = {version = "^2.0.0", optional = true}
+networkx = "^2.5"
+pylint = { version = "^2.6.0", optional = true }
+python = "^3.8.0"
+sphinx-autodoc-typehints = { version = "^1.11.1", optional = true }
+sphinx-celery = { version = "^2.0.0", optional = true }
+sphinx-pyreverse = { version = "^0.0.17", optional = true }
+transitions = { version = "^0.8.10", extras = ['diagrams'], optional = true }
+transitions-anyio = "^0.3.0"
+trio = { version = "^0.23.1", optional = true }
+uvloop = { version = "^0.19.0", optional = true }
+wrapt = "^1.12.1"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.0"
-pytest-subtests = "^0.3"
-pytest-randomly = "^3.4"
-trio = "^0.17"
-curio = "^1.4"
+autoflake = "^1.4"
 black = "^20.8b1"
+isort = "^5.7.0"
+mock = { version = "^4.0.3", python = "< 3.8" }
+pytest = "^6.0"
+pytest-cov = "^3.0"
+pytest-github-actions-annotate-failures = "^0.1.1"
+pytest-monkeytype = "^1.1.0"
+pytest-randomly = "^3.4"
+pytest-subtests = "^0.6"
+pytest-timeout = "^2.1"
+pytest-xdist = "^2.2.0"
+pyupgrade = "^2.7.4"
+toml-sort = "^0.18.0"
 
 [tool.poetry.extras]
-readthedocs = ["sphinx-celery"]
+diagrams = ["transitions"]
+readthedocs = ["sphinx-celery", "sphinx-autodoc-typehints", "sphinx-pyreverse", "pylint", "trio"]
+trio = ["trio"]
+uvloop = ["uvloop"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    'ignore:A private pytest class or function was used.:pytest.PytestDeprecationWarning'
+]

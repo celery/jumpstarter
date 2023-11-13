@@ -1,18 +1,48 @@
 name: Unit Test
-on: [push]
+on:
+  push:
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - '.github/workflows/unit-test.yml'
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ 3.7, 3.8, 3.9 ]
+        python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12' ]
+        extras: ["(none)", "(diagrams)"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install graphviz dependencies
+      run: sudo apt-get install libgraphviz-dev graphviz
+      if: matrix.extras == '(diagrams)'
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-
     - name: Install CI dependencies
       run: pip install poetry nox nox-poetry
+    - name: Cache poetry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
     - name: Run unit tests
-      run: nox -s test-${{ matrix.python-version }}
+      run: nox -s 'test-${{ matrix.python-version }}${{matrix.extras}}'
+    - uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+        flags: unittests # optional
+        fail_ci_if_error: true # optional (default = false)
+        verbose: true # optional (default = false)
